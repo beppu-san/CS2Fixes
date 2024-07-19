@@ -95,6 +95,5 @@ namespace addresses
 		const Vector *vecDamageForce, const Vector *vecDamagePosition, float flDamage, int bitsDamageType, int iCustomDamage, void *a10);
 	inline void(FASTCALL *CNetworkStringTable_DeleteAllStrings)(INetworkStringTable *pThis);
 
-	inline void(FASTCALL* InitGameTrace)(trace_t* trace);
 	inline void(FASTCALL* TracePlayerBBox)(const Vector& start, const Vector& end, const bbox_t& bounds, CTraceFilter* filter, trace_t& pm);
 }
