@@ -106,7 +106,7 @@ SH_DECL_HOOK1_void(IServerGameClients, ClientSettingsChanged, SH_NOATTRIB, 0, CP
 SH_DECL_HOOK6_void(IServerGameClients, OnClientConnected, SH_NOATTRIB, 0, CPlayerSlot, const char*, uint64, const char *, const char *, bool);
 SH_DECL_HOOK6(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, CPlayerSlot, const char*, uint64, const char *, bool, CBufferString *);
 SH_DECL_HOOK8_void(IGameEventSystem, PostEventAbstract, SH_NOATTRIB, 0, CSplitScreenSlot, bool, int, const uint64*,
-	INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t)
+	INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t);
 SH_DECL_HOOK3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*);
 SH_DECL_HOOK7_void(ISource2GameEntities, CheckTransmit, SH_NOATTRIB, 0, CCheckTransmitInfo **, int, CBitVec<16384> &, const Entity2Networkable_t **, const uint16 *, int, bool);
 SH_DECL_HOOK2_void(IServerGameClients, ClientCommand, SH_NOATTRIB, 0, CPlayerSlot, const CCommand &);
@@ -300,6 +300,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 	g_pEntityListener = new CEntityListener();
 	g_pIdleSystem = new CIdleSystem();
 	g_pPanoramaVoteHandler = new CPanoramaVoteHandler();
+	g_pLeader = new CLeader();
 
 	RegisterWeaponCommands();
 
@@ -397,6 +398,9 @@ bool CS2Fixes::Unload(char *error, size_t maxlen)
 
 	if (g_pPanoramaVoteHandler)
 		delete g_pPanoramaVoteHandler;
+
+	if (g_pLeader)
+		delete g_pLeader;
 
 	if (g_iCGamePlayerEquipUseId != -1)
 		SH_REMOVE_HOOK_ID(g_iCGamePlayerEquipUseId);
@@ -589,8 +593,10 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 	}
 	else if (info->m_MessageId == GE_Source1LegacyGameEvent)
 	{
+		/*
 		if (g_bEnableLeader)
 			Leader_PostEventAbstract_Source1LegacyGameEvent(clients, pData);
+		*/
 	}
 }
 
@@ -824,7 +830,7 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo **ppInfoList, int infoCount
 			// TODO: Revert this if/when valve fixes the issue?
 			// Also do not hide leaders to other players
 			ZEPlayer *pOtherZEPlayer = g_playerManager->GetPlayer(j);
-			if ((pSelfZEPlayer->ShouldBlockTransmit(j) && (pOtherZEPlayer && !pOtherZEPlayer->IsLeader())) || !pPawn->IsAlive())
+			if ((pSelfZEPlayer->ShouldBlockTransmit(j) && (pOtherZEPlayer /* && !pOtherZEPlayer->IsLeader()*/)) || !pPawn->IsAlive())
 				pInfo->m_pTransmitEntity->Clear(pPawn->entindex());
 		}
 

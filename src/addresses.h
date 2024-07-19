@@ -23,6 +23,7 @@
 #include "utils/module.h"
 #include "utlstring.h"
 #include "variant.h"
+#include "eiface.h"
 
 namespace modules
 {
@@ -93,4 +94,7 @@ namespace addresses
 	inline void(FASTCALL *CTakeDamageInfo_Constructor)(CTakeDamageInfo *pThis, CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBaseEntity *pAbility,
 		const Vector *vecDamageForce, const Vector *vecDamagePosition, float flDamage, int bitsDamageType, int iCustomDamage, void *a10);
 	inline void(FASTCALL *CNetworkStringTable_DeleteAllStrings)(INetworkStringTable *pThis);
+
+	inline void(FASTCALL* InitGameTrace)(trace_t* trace);
+	inline void(FASTCALL* TracePlayerBBox)(const Vector& start, const Vector& end, const bbox_t& bounds, CTraceFilter* filter, trace_t& pm);
 }

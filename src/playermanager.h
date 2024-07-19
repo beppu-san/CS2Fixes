@@ -114,9 +114,6 @@ public:
 		m_iMZImmunity = 0; // out of 100
 		m_flNominateTime = -60.0f;
 		m_iPlayerState = 1; // STATE_WELCOME is the initial state
-		m_iLeaderIndex = 0;
-		m_iLeaderTracerIndex = 0;
-		m_flLeaderVoteTime = -30.0f;
 		m_flSpeedMod = 1.f;
 		m_flMaxSpeed = 1.f;
 		m_iLastInputs = IN_NONE;
@@ -167,9 +164,6 @@ public:
 	void SetFlashLight(CBarnLight *pLight) { m_hFlashLight.Set(pLight); }
 	void SetBeaconParticle(CParticleSystem *pParticle) { m_hBeaconParticle.Set(pParticle); }
 	void SetPlayerState(uint32 iPlayerState) { m_iPlayerState = iPlayerState; }
-	void SetLeader(int leaderIndex);
-	void SetLeaderTracer(int tracerIndex) { m_iLeaderTracerIndex = tracerIndex; }
-	void SetLeaderVoteTime(float flCurtime) { m_flLeaderVoteTime = flCurtime; }
 	void SetGlowModel(CBaseModelEntity *pModel) { m_hGlowModel.Set(pModel); }
 	void SetSpeedMod(float flSpeedMod) { m_flSpeedMod = flSpeedMod; }
 	void SetLastInputs(uint64 iLastInputs) { m_iLastInputs = iLastInputs; }
@@ -197,12 +191,6 @@ public:
 	CParticleSystem *GetBeaconParticle() { return m_hBeaconParticle.Get(); }
 	ZEPlayerHandle GetHandle() { return m_Handle; }
 	uint32 GetPlayerState() { return m_iPlayerState; }
-	bool IsLeader() { return (bool) m_iLeaderIndex; }
-	int GetLeaderIndex() { return m_iLeaderIndex; }
-	int GetLeaderTracer() { return m_iLeaderTracerIndex; }
-	int GetLeaderVoteCount();
-	bool HasPlayerVotedLeader(ZEPlayer* pPlayer);
-	float GetLeaderVoteTime() { return m_flLeaderVoteTime; }
 	CBaseModelEntity *GetGlowModel() { return m_hGlowModel.Get(); }
 	float GetSpeedMod() { return m_flSpeedMod; }
 	float GetMaxSpeed() { return m_flMaxSpeed; }
@@ -217,8 +205,6 @@ public:
 	void ToggleFlashLight();
 	void StartBeacon(Color color, ZEPlayerHandle Giver = 0);
 	void EndBeacon();
-	void AddLeaderVote(ZEPlayer* pPlayer);
-	void PurgeLeaderVotes();
 	void StartGlow(Color color, int duration);
 	void EndGlow();
 
@@ -252,10 +238,6 @@ private:
 	CHandle<CParticleSystem> m_hBeaconParticle;
 	ZEPlayerHandle m_Handle;
 	uint32 m_iPlayerState;
-	int m_iLeaderIndex;
-	CUtlVector<ZEPlayerHandle> m_vecLeaderVotes;
-	int m_iLeaderTracerIndex;
-	float m_flLeaderVoteTime;
 	CHandle<CBaseModelEntity> m_hGlowModel;
 	float m_flSpeedMod;
 	float m_flMaxSpeed;

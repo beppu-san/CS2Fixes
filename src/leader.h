@@ -18,27 +18,67 @@
  */
 
 #pragma once
-#include "utils/entity.h"
-#include "playermanager.h"
-#include "gamesystem.h"
-#include "igameevents.h"
 
-struct LeaderColor
+#include "addresses.h"
+#include "gamesystem.h"
+#include "playermanager.h"
+
+#include "utils/entity.h"
+
+#include "entity/cbaseentity.h"
+#include "entity/cbasemodelentity.h"
+#include "entity/cparticlesystem.h"
+
+#define LEADER_PREFIX " \4[ZLeader]\1 "
+#define MAXMARKERS 5
+
+struct MarkerVisuals_t
 {
-	const char* pszColorName;
-	Color clColor;
+	const Color clColor;
+	const char* pszSpriteName;
 };
 
-extern LeaderColor LeaderColorMap[];
-extern const size_t g_nLeaderColorMapSize;
-extern CUtlVector<ZEPlayerHandle> g_vecLeaders;
-extern int g_iLeaderIndex;
+extern MarkerVisuals_t MarkerVisualMaps[MAXMARKERS];
 
-extern bool g_bEnableLeader;
+struct Marker_t
+{
+	CHandle<CBaseModelEntity> hModel;
+	CHandle<CParticleSystem> hSprite;
 
-bool Leader_NoLeaders();
-void Leader_ApplyLeaderVisuals(CCSPlayerPawn *pPawn);
-void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64 *clients, const CNetMessage *pData);
-void Leader_OnRoundStart(IGameEvent *pEvent);
-void Leader_BulletImpact(IGameEvent *pEvent);
-void Leader_Precache(IEntityResourceManifest *pResourceManifest);
+	void Init();
+	void Create(Vector& origin, QAngle& angles, CBaseEntity* pHitEntity, const MarkerVisuals_t visMap);
+	bool IsTrainEntity(CBaseEntity* pEntity);
+};
+
+class CLeader
+{
+public:
+	CLeader()
+	{
+		m_pPlayer = nullptr;
+		m_iMarkerIndex = -1;
+		m_nButtonsPrevious = IN_NONE;
+		m_nButtons = IN_NONE;
+		m_flRightClickDuration = -1.f;
+	}
+
+	bool SetLeader(ZEPlayer* pPlayer);
+	void PutMarker();
+	void RemoveAllMarkers();
+	void TraceRay(const Vector& vecStart, const Vector& vecEnd, const bbox_t& nBounds, CTraceFilter* pFilter, trace_t& nTrace) { addresses::TracePlayerBBox(vecStart, vecEnd, nBounds, pFilter, nTrace); }
+
+	ZEPlayer* GetLeader() { return m_pPlayer; }
+	void GetAimingPos(CCSPlayerPawn* pPlayer, Vector& vecPos, QAngle& angAng);
+
+private:
+	ZEPlayer* m_pPlayer;
+	Marker_t m_markers[MAXMARKERS];
+	int m_iMarkerIndex;
+	uint64 m_nButtonsPrevious;
+	uint64 m_nButtons;
+	float m_flRightClickDuration;
+};
+
+extern CLeader* g_pLeader;
+
+void Leader_Precache(IEntityResourceManifest* pResourceManifest);

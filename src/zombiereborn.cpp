@@ -667,12 +667,12 @@ void CZRPlayerClassManager::ApplyHumanClass(ZRHumanClass *pClass, CCSPlayerPawn 
 	if (pController)
 		CZRRegenTimer::StopRegen(pController);
 	
-	if (!g_bEnableLeader || !pController)
+	if (/*!g_bEnableLeader || */!pController)
 		return;
 	
 	ZEPlayer *pPlayer = g_playerManager->GetPlayer(pController->GetPlayerSlot());
 
-	if (pPlayer && pPlayer->IsLeader())
+	if (pPlayer/* && pPlayer->IsLeader()*/)
 	{
 		CHandle<CCSPlayerPawn> hPawn = pPawn->GetHandle();
 
@@ -680,7 +680,7 @@ void CZRPlayerClassManager::ApplyHumanClass(ZRHumanClass *pClass, CCSPlayerPawn 
 		{
 			CCSPlayerPawn *pPawn = hPawn.Get();
 			if (pPawn)
-				Leader_ApplyLeaderVisuals(pPawn);
+				// Leader_ApplyLeaderVisuals(pPawn);
 			return -1.0f;
 		});
 	}
