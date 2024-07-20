@@ -22,6 +22,7 @@
 #include "addresses.h"
 #include "gamesystem.h"
 #include "playermanager.h"
+#include "igameevents.h"
 
 #include "utils/entity.h"
 
@@ -30,7 +31,7 @@
 #include "entity/cparticlesystem.h"
 
 #define LEADER_PREFIX " \4[ZLeader]\1 "
-#define MAXMARKERS 5
+#define MAXMARKERS 4
 
 struct MarkerVisuals_t
 {
@@ -40,10 +41,20 @@ struct MarkerVisuals_t
 
 extern MarkerVisuals_t MarkerVisualMaps[MAXMARKERS];
 
+struct LeaderColor
+{
+	const char* pszColorName;
+	Color clColor;
+};
+
+extern LeaderColor LeaderColorMap[];
+extern const size_t g_nLeaderColorMapSize;
+extern bool g_bEnableLeader;
+
 struct Marker_t
 {
 	CHandle<CBaseModelEntity> hModel;
-	CHandle<CParticleSystem> hSprite;
+	CHandle<CBaseModelEntity> hSprite;
 
 	void Init();
 	void Create(Vector& origin, QAngle& angles, CBaseEntity* pHitEntity, const MarkerVisuals_t visMap);
@@ -64,6 +75,7 @@ public:
 
 	bool SetLeader(ZEPlayer* pPlayer);
 	void PutMarker();
+	void ResetMarker() { m_iMarkerIndex = 0; }
 	void RemoveAllMarkers();
 	void TraceRay(const Vector& vecStart, const Vector& vecEnd, const bbox_t& nBounds, CTraceFilter* pFilter, trace_t& nTrace) { addresses::TracePlayerBBox(vecStart, vecEnd, nBounds, pFilter, nTrace); }
 
@@ -84,4 +96,3 @@ extern CLeader* g_pLeader;
 void Leader_Precache(IEntityResourceManifest* pResourceManifest);
 void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64* clients, const CNetMessage* pData);
 void Leader_OnRoundStart(IGameEvent* pEvent);
-void Leader_BulletImpact(IGameEvent* pEvent);

@@ -21,19 +21,69 @@
 #include "ctimer.h"
 #include "common.h"
 #include "commands.h"
+#include "gameevents.pb.h"
+#include "zombiereborn.h"
+#include "networksystem/inetworkmessages.h"
 
-#define MARKER_MODEL "models/leader_mark/leader_mark.vmdl"
+#define MARKER_MODEL "models/leader_model/marker.vmdl"
 
 CLeader* g_pLeader = nullptr;
 
+extern IVEngineServer2* g_pEngineServer2;
+extern CGameEntitySystem* g_pEntitySystem;
+extern CGlobalVars* gpGlobals;
+extern IGameEventManager2* g_gameEventManager;
+
+LeaderColor LeaderColorMap[] = {
+	{"white",		Color(255, 255, 255, 255)}, // default if color finding func doesn't match any other color
+	{"blue",		Color(40, 100, 255, 255)}, // Default CT color and first leader index
+	{"orange",		Color(185, 93, 63, 255)}, // Default T color
+	{"green",		Color(100, 230, 100, 255)},
+	{"yellow",		Color(200, 200, 0, 255)},
+	{"purple",		Color(164, 73, 255, 255)},
+	{"red",			Color(214, 39, 40, 255)}, // Last leader index
+};
+
+const size_t g_nLeaderColorMapSize = sizeof(LeaderColorMap) / sizeof(LeaderColor);
+
 MarkerVisuals_t MarkerVisualMaps[] =
 {
-	{Color(255, 0, 0, 255), "particles/leader/mark_tag_a.vpcf"},
-	{Color(0, 255, 0, 255), "particles/leader/mark_tag_b.vpcf"},
-	{Color(0, 0, 255, 255), "particles/leader/mark_tag_c.vpcf"},
-	{Color(255, 255, 0, 255), "particles/leader/mark_tag_d.vpcf"},
-	{Color(255, 0, 255, 255), "particles/leader/mark_tag_e.vpcf"},
+	{Color(255, 0, 0, 255), "models/leader_model/text_a.vmdl"},
+	{Color(0, 0, 255, 255), "models/leader_model/text_b.vmdl"},
+	{Color(255, 255, 0, 255), "models/leader_model/text_c.vmdl"},
+	{Color(0, 255, 0, 255), "models/leader_model/text_d.vmdl"},
 };
+
+bool g_bEnableLeader = false;
+static float g_flLeaderVoteRatio = 0.15;
+static bool g_bLeaderActionsHumanOnly = true;
+static bool g_bMutePingsIfNoLeader = true;
+static std::string g_szLeaderModelPath = "";
+static int g_iMarkerCount = 0;
+
+FAKE_BOOL_CVAR(cs2f_leader_enable, "Whether to enable Leader features", g_bEnableLeader, false, false)
+FAKE_FLOAT_CVAR(cs2f_leader_vote_ratio, "Vote ratio needed for player to become a leader", g_flLeaderVoteRatio, 0.2f, false)
+FAKE_BOOL_CVAR(cs2f_leader_actions_ct_only, "Whether to allow leader actions (like !ldbeacon) only from human team", g_bLeaderActionsHumanOnly, true, false)
+FAKE_BOOL_CVAR(cs2f_leader_mute_ping_no_leader, "Whether to mute player pings whenever there's no leader", g_bMutePingsIfNoLeader, true, false)
+FAKE_STRING_CVAR(cs2f_leader_model_path, "Path to player model to be used for leaders", g_szLeaderModelPath, false)
+
+Color Leader_ColorFromString(const char* pszColorName)
+{
+	int iColorIndex = V_StringToInt32(pszColorName, -1);
+
+	if (iColorIndex > -1)
+		return LeaderColorMap[MIN(iColorIndex, g_nLeaderColorMapSize - 1)].clColor;
+
+	for (int i = 0; i < g_nLeaderColorMapSize; i++)
+	{
+		if (!V_stricmp(pszColorName, LeaderColorMap[i].pszColorName))
+		{
+			return LeaderColorMap[i].clColor;
+		}
+	}
+
+	return LeaderColorMap[0].clColor;
+}
 
 void Leader_Precache(IEntityResourceManifest* pResourceManifest)
 {
@@ -50,7 +100,6 @@ bool CLeader::SetLeader(ZEPlayer* pPlayer)
 
 	m_pPlayer = pPlayer;
 	m_iMarkerIndex = 0;
-	pPlayer.SetLeader(true);
 
 	new CTimer(.01f, false, true, [this, pPlayer]()
 		{
@@ -168,13 +217,13 @@ void Marker_t::Init()
 {
 	CBaseModelEntity* pModel = hModel.Get();
 	if (pModel)
-		UTIL_AddEntityIOEvent(pModel, "Kill", nullptr, nullptr, "", .02f);
+		UTIL_AddEntityIOEvent(pModel, "Kill", nullptr, nullptr, "", 0.f);
 
-	CParticleSystem* pSprite = hSprite.Get();
+	CBaseModelEntity* pSprite = hSprite.Get();
 	if (pSprite)
 	{
-		UTIL_AddEntityIOEvent(pSprite, "DestroyImmediately", nullptr, nullptr, "", .0f);
-		// UTIL_AddEntityIOEvent(pSprite, "Kill", nullptr, nullptr, "", .02f);	// somehow it crashes the server.
+		// UTIL_AddEntityIOEvent(pSprite, "DestroyImmediately", nullptr, nullptr, "", .0f);
+		UTIL_AddEntityIOEvent(pSprite, "Kill", nullptr, nullptr, "", 0.f);	// somehow it crashes the server.
 	}
 
 	hModel = nullptr;
@@ -186,7 +235,6 @@ void Marker_t::Create(Vector& origin, QAngle& angles, CBaseEntity* pHitEntity, c
 	CBaseModelEntity* pModel = (CBaseModelEntity*)CreateEntityByName("prop_dynamic_override");
 	CEntityKeyValues* pKeyValuesModel = new CEntityKeyValues();
 	pKeyValuesModel->SetString("model", MARKER_MODEL);
-	pKeyValuesModel->SetString("DefaultAnim", "idle");
 	pKeyValuesModel->SetInt("spawnflags", 256U);
 	pKeyValuesModel->SetColor("rendercolor", visMap.clColor);
 	pKeyValuesModel->SetInt("rendermode", kRenderTransColor);
@@ -200,18 +248,25 @@ void Marker_t::Create(Vector& origin, QAngle& angles, CBaseEntity* pHitEntity, c
 	if (IsTrainEntity(pHitEntity))
 		pModel->SetParent(pHitEntity);
 
-	CParticleSystem* pSprite = (CParticleSystem*)CreateEntityByName("info_particle_system");
+	CBaseModelEntity* pSprite = (CBaseModelEntity*)CreateEntityByName("prop_dynamic_override");
 	CEntityKeyValues* pKeyValuesSprite = new CEntityKeyValues();
-	pKeyValuesSprite->SetString("effect_name", visMap.pszSpriteName);
-	pKeyValuesSprite->SetBool("start_active", true);
+	pKeyValuesSprite->SetString("model", visMap.pszSpriteName);
+	pKeyValuesSprite->SetInt("spawnflags", 256U);
+	pKeyValuesSprite->SetColor("rendercolor", Color(255, 255, 255, 255));
+	pKeyValuesSprite->SetInt("rendermode", kRenderTransColor);
+	pKeyValuesSprite->SetInt("renderfx", kRenderFxPulseSlow);
+	pKeyValuesSprite->SetInt("disableshadows", 1);
+	pKeyValuesSprite->SetInt("disablereceiveshadows", 1);
 
 	angles.x -= 90.f;
 	Vector vecAng;
 	AngleVectors(angles, &vecAng);
 	origin += vecAng * 30.f;
 
+	angles.x += 90.f;
+
 	pSprite->DispatchSpawn(pKeyValuesSprite);
-	pSprite->Teleport(&origin, nullptr, nullptr);
+	pSprite->Teleport(&origin, &angles, nullptr);
 	pSprite->SetParent(pModel);
 
 	hModel = pModel->GetHandle();
@@ -238,26 +293,15 @@ CON_COMMAND_CHAT(leader, "- test command")
 		ClientPrintAll(HUD_PRINTTALK, LEADER_PREFIX "new leader incoming");
 }
 
+
 void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64* clients, const CNetMessage* pData)
 {
-	if (!g_bEnableLeader)
-		return;
-
 	auto pPBData = pData->ToPB<CMsgSource1LegacyGameEvent>();
 
 	static int player_ping_id = g_gameEventManager->LookupEventId("player_ping");
 
 	if (pPBData->eventid() != player_ping_id)
 		return;
-
-	// Don't kill ping visual when there's no leader, only mute the ping depending on cvar
-	if (Leader_NoLeaders())
-	{
-		if (g_bMutePingsIfNoLeader)
-			*(uint64*)clients = 0;
-
-		return;
-	}
 
 	IGameEvent* pEvent = g_gameEventManager->UnserializeEvent(*pPBData);
 
@@ -289,56 +333,7 @@ void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64* clients, cons
 
 void Leader_OnRoundStart(IGameEvent* pEvent)
 {
-	for (int i = 0; i < gpGlobals->maxClients; i++)
-	{
-		ZEPlayer* pPlayer = g_playerManager->GetPlayer((CPlayerSlot)i);
-
-		if (pPlayer && !pPlayer->IsLeader())
-			pPlayer->SetLeaderTracer(0);
-	}
-
-	g_iMarkerCount = 0;
-}
-
-// revisit this later with a TempEnt implementation
-void Leader_BulletImpact(IGameEvent* pEvent)
-{
-	ZEPlayer* pPlayer = g_playerManager->GetPlayer(pEvent->GetPlayerSlot("userid"));
-
-	if (!pPlayer)
-		return;
-
-	int iTracerIndex = pPlayer->GetLeaderTracer();
-
-	if (!iTracerIndex)
-		return;
-
-	CCSPlayerPawn* pPawn = (CCSPlayerPawn*)pEvent->GetPlayerPawn("userid");
-	CBasePlayerWeapon* pWeapon = pPawn->m_pWeaponServices->m_hActiveWeapon.Get();
-
-	CParticleSystem* particle = (CParticleSystem*)CreateEntityByName("info_particle_system");
-
-	// Teleport particle to muzzle_flash attachment of player's weapon
-	particle->AcceptInput("SetParent", "!activator", pWeapon, nullptr);
-	particle->AcceptInput("SetParentAttachment", "muzzle_flash");
-
-	CEntityKeyValues* pKeyValues = new CEntityKeyValues();
-
-	// Event contains other end of the particle
-	Vector vecData = Vector(pEvent->GetFloat("x"), pEvent->GetFloat("y"), pEvent->GetFloat("z"));
-	Color clTint = LeaderColorMap[iTracerIndex].clColor;
-
-	pKeyValues->SetString("effect_name", "particles/cs2fixes/leader_tracer.vpcf");
-	pKeyValues->SetInt("data_cp", 1);
-	pKeyValues->SetVector("data_cp_value", vecData);
-	pKeyValues->SetInt("tint_cp", 2);
-	pKeyValues->SetColor("tint_cp_color", clTint);
-	pKeyValues->SetBool("start_active", true);
-
-	particle->DispatchSpawn(pKeyValues);
-
-	UTIL_AddEntityIOEvent(particle, "DestroyImmediately", nullptr, nullptr, "", 0.1f);
-	UTIL_AddEntityIOEvent(particle, "Kill", nullptr, nullptr, "", 0.12f);
+	g_pLeader->ResetMarker();
 }
 
 CON_COMMAND_CHAT(glow, "<name> [duration] - toggle glow highlight on a player")
@@ -389,7 +384,7 @@ CON_COMMAND_CHAT(glow, "<name> [duration] - toggle glow highlight on a player")
 
 			// Exception - Use LeaderIndex color if Admin is also a Leader
 			if (pPlayer && pPlayer->IsLeader())
-				color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
+				color = LeaderColorMap[(rand() % g_nLeaderColorMapSize)].clColor;
 			else
 				color = pTarget->m_iTeamNum == CS_TEAM_T ? LeaderColorMap[2].clColor/*orange*/ : LeaderColorMap[1].clColor/*blue*/;
 
@@ -461,7 +456,7 @@ CON_COMMAND_CHAT(glow, "<name> [duration] - toggle glow highlight on a player")
 		return;
 	}
 
-	color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
+	color = LeaderColorMap[(rand() % g_nLeaderColorMapSize)].clColor;
 
 	ZEPlayer* pPlayerTarget = g_playerManager->GetPlayer(pSlots[0]);
 
@@ -475,107 +470,6 @@ CON_COMMAND_CHAT(glow, "<name> [duration] - toggle glow highlight on a player")
 		pPlayerTarget->EndGlow();
 		ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "Leader %s disabled glow on %s.", player->GetPlayerName(), pTarget->GetPlayerName());
 	}
-}
-
-CON_COMMAND_CHAT(tracer, "<name> [color] - toggle projectile tracers on a player")
-{
-	if (!g_bEnableLeader)
-		return;
-
-	if (!player)
-	{
-		ClientPrint(player, HUD_PRINTCONSOLE, CHAT_PREFIX "You cannot use this command from the server console.");
-		return;
-	}
-
-	int iPlayerSlot = player->GetPlayerSlot();
-
-	ZEPlayer* pPlayer = g_playerManager->GetPlayer(iPlayerSlot);
-
-	if (!pPlayer->IsLeader())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a leader to use this command.");
-		return;
-	}
-
-	if (player->m_iTeamNum != CS_TEAM_CT && g_bLeaderActionsHumanOnly)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a human to use this command.");
-		return;
-	}
-
-	if (args.ArgC() < 2)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !tracer <name> [color]");
-		return;
-	}
-
-	int iNumClients = 0;
-	int pSlot[MAXPLAYERS];
-	ETargetType nTargetType = g_playerManager->TargetPlayerString(iPlayerSlot, args[1], iNumClients, pSlot);
-
-	if (nTargetType > ETargetType::SELF)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must target a specific player.");
-		return;
-	}
-
-	if (!iNumClients)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Target not found.");
-		return;
-	}
-
-	if (iNumClients > 1)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "More than one player fit the target name.");
-		return;
-	}
-
-	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlot[0]);
-
-	if (!pTarget)
-		return;
-
-	if (pTarget->m_iTeamNum != CS_TEAM_CT)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You can only toggle tracers on a human.");
-		return;
-	}
-
-	ZEPlayer* pPlayerTarget = g_playerManager->GetPlayer(pSlot[0]);
-
-	if (pPlayerTarget->GetLeaderTracer())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Disabled tracers for player %s.", pTarget->GetPlayerName());
-		pPlayerTarget->SetLeaderTracer(0);
-		return;
-	}
-
-	int iTracerIndex = 0;
-	if (args.ArgC() < 3)
-		iTracerIndex = pPlayer->GetLeaderIndex();
-	else
-	{
-		int iIndex = V_StringToInt32(args[2], -1);
-
-		if (iIndex > -1)
-			iTracerIndex = MIN(iIndex, g_nLeaderColorMapSize - 1);
-		else
-		{
-			for (int i = 0; i < g_nLeaderColorMapSize; i++)
-			{
-				if (!V_stricmp(args[2], LeaderColorMap[i].pszColorName))
-				{
-					iTracerIndex = i;
-					break;
-				}
-			}
-		}
-	}
-
-	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Enabled tracers for player %s.", pTarget->GetPlayerName());
-	pPlayerTarget->SetLeaderTracer(iTracerIndex);
 }
 
 CON_COMMAND_CHAT(beacon, "<name> [color] - toggle beacon on a player")
@@ -625,7 +519,7 @@ CON_COMMAND_CHAT(beacon, "<name> [color] - toggle beacon on a player")
 
 			// Exception - Use LeaderIndex color if Admin is also a Leader
 			if (args.ArgC() == 2 && pPlayer && pPlayer->IsLeader())
-				color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
+				color = LeaderColorMap[(rand() % g_nLeaderColorMapSize)].clColor;
 			else if (args.ArgC() == 2)
 				color = pTarget->m_iTeamNum == CS_TEAM_T ? LeaderColorMap[2].clColor/*orange*/ : LeaderColorMap[1].clColor/*blue*/;
 
@@ -701,7 +595,7 @@ CON_COMMAND_CHAT(beacon, "<name> [color] - toggle beacon on a player")
 	if (args.ArgC() == 3)
 		color = Leader_ColorFromString(args[2]);
 	else
-		color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
+		color = LeaderColorMap[(rand() % g_nLeaderColorMapSize)].clColor;
 
 	ZEPlayer* pPlayerTarget = g_playerManager->GetPlayer(pSlots[0]);
 
