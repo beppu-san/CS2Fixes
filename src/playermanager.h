@@ -114,6 +114,7 @@ public:
 		m_iMZImmunity = 0; // out of 100
 		m_flNominateTime = -60.0f;
 		m_iPlayerState = 1; // STATE_WELCOME is the initial state
+		m_bIsLeader = false;
 		m_flSpeedMod = 1.f;
 		m_flMaxSpeed = 1.f;
 		m_iLastInputs = IN_NONE;
@@ -164,6 +165,7 @@ public:
 	void SetFlashLight(CBarnLight *pLight) { m_hFlashLight.Set(pLight); }
 	void SetBeaconParticle(CParticleSystem *pParticle) { m_hBeaconParticle.Set(pParticle); }
 	void SetPlayerState(uint32 iPlayerState) { m_iPlayerState = iPlayerState; }
+	void SetLeader(bool bLeader) { m_bIsLeader = bLeader; }
 	void SetGlowModel(CBaseModelEntity *pModel) { m_hGlowModel.Set(pModel); }
 	void SetSpeedMod(float flSpeedMod) { m_flSpeedMod = flSpeedMod; }
 	void SetLastInputs(uint64 iLastInputs) { m_iLastInputs = iLastInputs; }
@@ -191,6 +193,7 @@ public:
 	CParticleSystem *GetBeaconParticle() { return m_hBeaconParticle.Get(); }
 	ZEPlayerHandle GetHandle() { return m_Handle; }
 	uint32 GetPlayerState() { return m_iPlayerState; }
+	bool IsLeader() { return m_bIsLeader; }
 	CBaseModelEntity *GetGlowModel() { return m_hGlowModel.Get(); }
 	float GetSpeedMod() { return m_flSpeedMod; }
 	float GetMaxSpeed() { return m_flMaxSpeed; }
@@ -238,6 +241,7 @@ private:
 	CHandle<CParticleSystem> m_hBeaconParticle;
 	ZEPlayerHandle m_Handle;
 	uint32 m_iPlayerState;
+	bool m_bIsLeader;
 	CHandle<CBaseModelEntity> m_hGlowModel;
 	float m_flSpeedMod;
 	float m_flMaxSpeed;

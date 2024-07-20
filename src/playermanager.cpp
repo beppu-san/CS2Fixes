@@ -292,7 +292,7 @@ void ZEPlayer::StartBeacon(Color color, ZEPlayerHandle hGiver/* = 0*/)
 	bool bLeaderBeacon = false;
 
 	ZEPlayer *pGiver = hGiver.Get();
-	if (pGiver/* && pGiver->IsLeader()*/)
+	if (pGiver && pGiver->IsLeader())
 		bLeaderBeacon = true;
 
 	new CTimer(1.0f, false, false, [hPlayer, hParticle, hGiver, iTeamNum, bLeaderBeacon]()
@@ -319,14 +319,11 @@ void ZEPlayer::StartBeacon(Color color, ZEPlayerHandle hGiver/* = 0*/)
 		if (!pBeaconGiver)
 			return 1.0f;
 
-		// Remove beacon granted by leader if his leader was stripped
-		/*
 		if (!pBeaconGiver->IsLeader())
 		{
 			addresses::UTIL_Remove(pParticle);
 			return -1.0f;
 		}
-		*/
 
 		return 1.0f;
 	});

@@ -593,10 +593,7 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 	}
 	else if (info->m_MessageId == GE_Source1LegacyGameEvent)
 	{
-		/*
-		if (g_bEnableLeader)
-			Leader_PostEventAbstract_Source1LegacyGameEvent(clients, pData);
-		*/
+		Leader_PostEventAbstract_Source1LegacyGameEvent(clients, pData);
 	}
 }
 
@@ -830,7 +827,7 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo **ppInfoList, int infoCount
 			// TODO: Revert this if/when valve fixes the issue?
 			// Also do not hide leaders to other players
 			ZEPlayer *pOtherZEPlayer = g_playerManager->GetPlayer(j);
-			if ((pSelfZEPlayer->ShouldBlockTransmit(j) && (pOtherZEPlayer /* && !pOtherZEPlayer->IsLeader()*/)) || !pPawn->IsAlive())
+			if ((pSelfZEPlayer->ShouldBlockTransmit(j) && (pOtherZEPlayer && !pOtherZEPlayer->IsLeader())) || !pPawn->IsAlive())
 				pInfo->m_pTransmitEntity->Clear(pPawn->entindex());
 		}
 

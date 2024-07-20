@@ -82,3 +82,6 @@ private:
 extern CLeader* g_pLeader;
 
 void Leader_Precache(IEntityResourceManifest* pResourceManifest);
+void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64* clients, const CNetMessage* pData);
+void Leader_OnRoundStart(IGameEvent* pEvent);
+void Leader_BulletImpact(IGameEvent* pEvent);
