@@ -24,7 +24,7 @@
 class CParticleSystem : public CBaseModelEntity
 {
 public:
-	DECLARE_SCHEMA_CLASS(CParticleSystem);
+	DECLARE_SCHEMA_CLASS(CParticleSystem)
 
 	SCHEMA_FIELD(bool, m_bActive)
 	SCHEMA_FIELD(bool, m_bStartActive)
@@ -38,7 +38,7 @@ public:
 class CEnvParticleGlow : public CParticleSystem
 {
 public:
-	DECLARE_SCHEMA_CLASS(CEnvParticleGlow);
+	DECLARE_SCHEMA_CLASS(CEnvParticleGlow)
 
 	SCHEMA_FIELD(float, m_flAlphaScale)
 	SCHEMA_FIELD(float, m_flRadiusScale)

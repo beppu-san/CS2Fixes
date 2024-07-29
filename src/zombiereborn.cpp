@@ -1332,7 +1332,7 @@ void ZR_InitialInfection()
 	std::vector<SpawnPoint*> spawns = ZR_GetSpawns();
 	if (g_iInfectSpawnType == EZRSpawnType::RESPAWN && !spawns.size())
 	{
-		ClientPrintAll(HUD_PRINTTALK, ZR_PREFIX"There are no spawns!");
+		ClientPrintAll(HUD_PRINTTALK, ZR_PREFIX "There are no spawns!");
 		return;
 	}
 
@@ -1756,7 +1756,7 @@ CON_COMMAND_CHAT(ztele, "- teleport to spawn")
 	std::vector<SpawnPoint*> spawns = ZR_GetSpawns();
 	if (!spawns.size())
 	{
-		ClientPrint(player, HUD_PRINTTALK, ZR_PREFIX"There are no spawns!");
+		ClientPrint(player, HUD_PRINTTALK, ZR_PREFIX "There are no spawns!");
 		return;
 	}
 
@@ -1772,14 +1772,14 @@ CON_COMMAND_CHAT(ztele, "- teleport to spawn")
 
 	if (!pPawn->IsAlive())
 	{
-		ClientPrint(player, HUD_PRINTTALK, ZR_PREFIX"You cannot teleport when dead!");
+		ClientPrint(player, HUD_PRINTTALK, ZR_PREFIX "You cannot teleport when dead!");
 		return;
 	}
 
 	//Get initial player position so we can do distance check
 	Vector initialpos = pPawn->GetAbsOrigin();
 
-	ClientPrint(player, HUD_PRINTTALK, ZR_PREFIX"Teleporting to spawn in 5 seconds.");
+	ClientPrint(player, HUD_PRINTTALK, ZR_PREFIX "Teleporting to spawn in 5 seconds.");
 
 	CHandle<CBasePlayerPawn> pawnHandle = pPawn->GetHandle();
 

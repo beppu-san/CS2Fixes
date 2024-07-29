@@ -21,8 +21,8 @@
 #include "commands.h"
 #include <vprof.h>
 
-extern IVEngineServer2 *g_pEngineServer2;
-extern CGlobalVars *gpGlobals;
+extern IVEngineServer2* g_pEngineServer2;
+extern CGlobalVars* gpGlobals;
 extern CPlayerManager* g_playerManager;
 
 CIdleSystem* g_pIdleSystem = nullptr;

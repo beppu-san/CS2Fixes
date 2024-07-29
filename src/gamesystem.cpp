@@ -32,18 +32,18 @@
 #include "tier0/memdbgon.h"
 
 extern CGlobalVars* gpGlobals;
-extern CGameConfig *g_GameConfig;
+extern CGameConfig* g_GameConfig;
 
-CBaseGameSystemFactory **CBaseGameSystemFactory::sm_pFirst = nullptr;
+CBaseGameSystemFactory** CBaseGameSystemFactory::sm_pFirst = nullptr;
 
 CGameSystem g_GameSystem;
-IGameSystemFactory *CGameSystem::sm_Factory = nullptr;
+IGameSystemFactory* CGameSystem::sm_Factory = nullptr;
 
 // This mess is needed to get the pointer to sm_pFirst so we can insert game systems
 bool InitGameSystems()
 {
 	// This signature directly points to the instruction referencing sm_pFirst, and the opcode is 3 bytes so we skip those
-	uint8 *ptr = (uint8*)g_GameConfig->ResolveSignature("IGameSystem_InitAllSystems_pFirst") + 3;
+	uint8* ptr = (uint8*)g_GameConfig->ResolveSignature("IGameSystem_InitAllSystems_pFirst") + 3;
 
 	if (!ptr)
 	{
@@ -58,7 +58,7 @@ bool InitGameSystems()
 	ptr += 4;
 
 	// Now grab our pointer
-	CBaseGameSystemFactory::sm_pFirst = (CBaseGameSystemFactory **)(ptr + offset);
+	CBaseGameSystemFactory::sm_pFirst = (CBaseGameSystemFactory**)(ptr + offset);
 
 	// And insert the game system(s)
 	CGameSystem::sm_Factory = new CGameSystemStaticFactory<CGameSystem>("CS2Fixes_GameSystem", &g_GameSystem);
@@ -72,7 +72,7 @@ GS_EVENT_MEMBER(CGameSystem, BuildGameSessionManifest)
 {
 	Message("CGameSystem::BuildGameSessionManifest\n");
 
-	IEntityResourceManifest *pResourceManifest = msg->m_pResourceManifest;
+	IEntityResourceManifest* pResourceManifest = msg->m_pResourceManifest;
 
 	// This takes any resource type, model or not
 	// Any resource adding MUST be done here, the resource manifest is not long-lived
@@ -89,6 +89,7 @@ GS_EVENT_MEMBER(CGameSystem, BuildGameSessionManifest)
 GS_EVENT_MEMBER(CGameSystem, ServerPreEntityThink)
 {
 	VPROF_BUDGET("CGameSystem::ServerPreEntityThink", "CS2FixesPerFrame")
+
 	g_playerManager->FlashLightThink();
 	g_pIdleSystem->UpdateIdleTimes();
 	EntityHandler_OnGameFramePre(gpGlobals->m_bInSimulation, gpGlobals->tickcount);
@@ -98,5 +99,6 @@ GS_EVENT_MEMBER(CGameSystem, ServerPreEntityThink)
 GS_EVENT_MEMBER(CGameSystem, ServerPostEntityThink)
 {
 	VPROF_BUDGET("CGameSystem::ServerPostEntityThink", "CS2FixesPerFrame")
+	
 	g_playerManager->UpdatePlayerStates();
 }

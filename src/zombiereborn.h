@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include "adminsystem.h"
 #include "eventlistener.h"
 #include "ctimer.h"
@@ -51,12 +52,11 @@ struct ZRModelEntry
 	std::string szModelPath;
 	CUtlVector<int> vecSkins;
 	std::string szColor;
+
 	ZRModelEntry(ZRModelEntry* modelEntry);
 	ZRModelEntry(ordered_json jsonModelEntry);
-	int GetRandomSkin()
-	{
-		return vecSkins[rand() % vecSkins.Count()];
-	}
+
+	int GetRandomSkin() { return vecSkins[rand() % vecSkins.Count()]; }
 };
 
 //everything that human and zombie share
@@ -71,7 +71,8 @@ struct ZRClass
 	float flSpeed;
 	float flGravity;
 	uint64 iAdminFlag;
-	ZRClass(ZRClass *pClass, int iTeam) :
+
+	ZRClass(ZRClass* pClass, int iTeam) :
 		iTeam(iTeam),
 		bEnabled(pClass->bEnabled),
 		szClassName(pClass->szClassName),
@@ -80,14 +81,14 @@ struct ZRClass
 		flSpeed(pClass->flSpeed),
 		flGravity(pClass->flGravity),
 		iAdminFlag(pClass->iAdminFlag)
+	{
+		vecModels.Purge();
+		FOR_EACH_VEC(pClass->vecModels, i)
 		{
-			vecModels.Purge();
-			FOR_EACH_VEC(pClass->vecModels, i)
-			{
-				ZRModelEntry *modelEntry = new ZRModelEntry(pClass->vecModels[i]);
-				vecModels.AddToTail(modelEntry);
-			}
-		};
+			ZRModelEntry* modelEntry = new ZRModelEntry(pClass->vecModels[i]);
+			vecModels.AddToTail(modelEntry);
+		}
+	};
 
 	ZRClass(ordered_json jsonKeys, std::string szClassname);
 	void PrintInfo()
@@ -124,19 +125,17 @@ struct ZRClass
 			flGravity,
 			iAdminFlag);
 	};
+
 	void Override(ordered_json jsonKeys, std::string szClassname);
-	bool IsApplicableTo(CCSPlayerController *pController);
+	bool IsApplicableTo(CCSPlayerController* pController);
 	uint64 ParseClassFlags(const char* pszFlags);
-	ZRModelEntry *GetRandomModelEntry()
-	{
-		return vecModels[rand() % vecModels.Count()];
-	};
+	ZRModelEntry* GetRandomModelEntry() { return vecModels[rand() % vecModels.Count()]; }
 };
 
 
 struct ZRHumanClass : ZRClass
 {
-	ZRHumanClass(ZRHumanClass *pClass) : ZRClass(pClass, CS_TEAM_CT){};
+	ZRHumanClass(ZRHumanClass* pClass) : ZRClass(pClass, CS_TEAM_CT) {};
 	ZRHumanClass(ordered_json jsonKeys, std::string szClassname);
 };
 
@@ -144,11 +143,14 @@ struct ZRZombieClass : ZRClass
 {
 	int iHealthRegenCount;
 	float flHealthRegenInterval;
-	ZRZombieClass(ZRZombieClass *pClass) :
-		ZRClass(pClass, CS_TEAM_T), 
+
+	ZRZombieClass(ZRZombieClass* pClass) :
+		ZRClass(pClass, CS_TEAM_T),
 		iHealthRegenCount(pClass->iHealthRegenCount),
-		flHealthRegenInterval(pClass->flHealthRegenInterval){};
+		flHealthRegenInterval(pClass->flHealthRegenInterval) {}
+
 	ZRZombieClass(ordered_json jsonKeys, std::string szClassname);
+
 	void PrintInfo()
 	{
 		std::string szModels = "";
@@ -187,6 +189,7 @@ struct ZRZombieClass : ZRClass
 			iHealthRegenCount,
 			flHealthRegenInterval);
 	};
+
 	void Override(ordered_json jsonKeys, std::string szClassname);
 };
 
@@ -197,21 +200,23 @@ public:
 	{
 		m_ZombieClassMap.SetLessFunc(DefLessFunc(uint32));
 		m_HumanClassMap.SetLessFunc(DefLessFunc(uint32));
-	};
+	}
+
 	void LoadPlayerClass();
 	bool CreateJsonConfigFromKeyValuesFile();
-	void ApplyBaseClassVisuals(ZRClass *pClass, CCSPlayerPawn *pPawn);
-	ZRHumanClass* GetHumanClass(const char *pszClassName);
-	void ApplyHumanClass(ZRHumanClass *pClass, CCSPlayerPawn *pPawn);
-	void ApplyPreferredOrDefaultHumanClass(CCSPlayerPawn *pPawn);
-	void ApplyPreferredOrDefaultHumanClassVisuals(CCSPlayerPawn *pPawn);
-	ZRZombieClass* GetZombieClass(const char*pszClassName);
-	void ApplyZombieClass(ZRZombieClass *pClass, CCSPlayerPawn *pPawn);
-	void ApplyPreferredOrDefaultZombieClass(CCSPlayerPawn *pPawn);
+	void ApplyBaseClassVisuals(ZRClass* pClass, CCSPlayerPawn* pPawn);
+	ZRHumanClass* GetHumanClass(const char* pszClassName);
+	void ApplyHumanClass(ZRHumanClass* pClass, CCSPlayerPawn* pPawn);
+	void ApplyPreferredOrDefaultHumanClass(CCSPlayerPawn* pPawn);
+	void ApplyPreferredOrDefaultHumanClassVisuals(CCSPlayerPawn* pPawn);
+	ZRZombieClass* GetZombieClass(const char* pszClassName);
+	void ApplyZombieClass(ZRZombieClass* pClass, CCSPlayerPawn* pPawn);
+	void ApplyPreferredOrDefaultZombieClass(CCSPlayerPawn* pPawn);
 	void PrecacheModels(IEntityResourceManifest* pResourceManifest);
-	void GetZRClassList(int iTeam, CUtlVector<ZRClass*> &vecClasses, CCSPlayerController* pController = nullptr);
+	void GetZRClassList(int iTeam, CUtlVector<ZRClass*>& vecClasses, CCSPlayerController* pController = nullptr);
+
 private:
-	void ApplyBaseClass(ZRClass* pClass, CCSPlayerPawn *pPawn);
+	void ApplyBaseClass(ZRClass* pClass, CCSPlayerPawn* pPawn);
 	CUtlVector<ZRZombieClass*> m_vecZombieDefaultClass;
 	CUtlVector<ZRHumanClass*> m_vecHumanDefaultClass;
 	CUtlMap<uint32, ZRZombieClass*> m_ZombieClassMap;
@@ -222,18 +227,20 @@ class CZRRegenTimer : public CTimerBase
 {
 public:
 	CZRRegenTimer(float flRegenInterval, int iRegenAmount, CHandle<CCSPlayerPawn> hPawnHandle) :
-		CTimerBase(flRegenInterval, false, false), m_iRegenAmount(iRegenAmount), m_hPawnHandle(hPawnHandle) {};
+		CTimerBase(flRegenInterval, false, false),
+		m_iRegenAmount(iRegenAmount),
+		m_hPawnHandle(hPawnHandle) {}
 
 	bool Execute();
-	static void StartRegen(float flRegenInterval, int iRegenAmount, CCSPlayerController *pController);
-	static void StopRegen(CCSPlayerController *pController);
+	static void StartRegen(float flRegenInterval, int iRegenAmount, CCSPlayerController* pController);
+	static void StopRegen(CCSPlayerController* pController);
 	static int GetIndex(CPlayerSlot slot);
 	static void Tick();
 	static void RemoveAllTimers();
 
 private:
 	static double s_flNextExecution;
-	static CZRRegenTimer *s_vecRegenTimers[MAXPLAYERS];
+	static CZRRegenTimer* s_vecRegenTimers[MAXPLAYERS];
 	int m_iRegenAmount;
 	CHandle<CCSPlayerPawn> m_hPawnHandle;
 };
@@ -249,14 +256,16 @@ public:
 	ZRWeaponConfig()
 	{
 		m_WeaponMap.SetLessFunc(DefLessFunc(uint32));
-	};
+	}
+
 	void LoadWeaponConfig();
-	ZRWeapon* FindWeapon(const char *pszWeaponName);
+	ZRWeapon* FindWeapon(const char* pszWeaponName);
+
 private:
 	CUtlMap<uint32, ZRWeapon*> m_WeaponMap;
 };
 
-extern ZRWeaponConfig *g_pZRWeaponConfig;
+extern ZRWeaponConfig* g_pZRWeaponConfig;
 extern CZRPlayerClassManager* g_pZRPlayerClassManager;
 
 extern bool g_bEnableZR;
@@ -270,9 +279,9 @@ void ZR_OnPlayerHurt(IGameEvent* pEvent);
 void ZR_OnPlayerDeath(IGameEvent* pEvent);
 void ZR_OnRoundFreezeEnd(IGameEvent* pEvent);
 void ZR_OnRoundTimeWarning(IGameEvent* pEvent);
-bool ZR_Hook_OnTakeDamage_Alive(CTakeDamageInfo *pInfo, CCSPlayerPawn *pVictimPawn);
-bool ZR_Detour_CCSPlayer_WeaponServices_CanUse(CCSPlayer_WeaponServices *pWeaponServices, CBasePlayerWeapon* pPlayerWeapon);
+bool ZR_Hook_OnTakeDamage_Alive(CTakeDamageInfo* pInfo, CCSPlayerPawn* pVictimPawn);
+bool ZR_Detour_CCSPlayer_WeaponServices_CanUse(CCSPlayer_WeaponServices* pWeaponServices, CBasePlayerWeapon* pPlayerWeapon);
 void ZR_Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, CUtlSymbolLarge* pInputName, CEntityInstance* pActivator, CEntityInstance* pCaller, variant_t* value, int nOutputID);
-void ZR_Hook_ClientPutInServer(CPlayerSlot slot, char const *pszName, int type, uint64 xuid);
-void ZR_Hook_ClientCommand_JoinTeam(CPlayerSlot slot, const CCommand &args);
+void ZR_Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, int type, uint64 xuid);
+void ZR_Hook_ClientCommand_JoinTeam(CPlayerSlot slot, const CCommand& args);
 void ZR_Precache(IEntityResourceManifest* pResourceManifest);

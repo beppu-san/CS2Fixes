@@ -2,7 +2,7 @@
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2024 Source2ZE
- * 
+ *
  * DynLibUtils
  * Copyright (C) 2023 komashchenko (Phoenix)
  * =============================================================================
@@ -76,7 +76,7 @@ int GetModuleInformation(HINSTANCE hModule, void** base, size_t* length, std::ve
 			ElfW(Ehdr)* ehdr = static_cast<ElfW(Ehdr)*>(map);
 			ElfW(Shdr)* shdrs = reinterpret_cast<ElfW(Shdr)*>(reinterpret_cast<uintptr_t>(ehdr) + ehdr->e_shoff);
 			const char* strTab = reinterpret_cast<const char*>(reinterpret_cast<uintptr_t>(ehdr) + shdrs[ehdr->e_shstrndx].sh_offset);
-	
+
 			for (auto i = 0; i < ehdr->e_phnum; ++i)
 			{
 				ElfW(Phdr)* phdr = reinterpret_cast<ElfW(Phdr)*>(reinterpret_cast<uintptr_t>(ehdr) + ehdr->e_phoff + i * ehdr->e_phentsize);
@@ -249,7 +249,7 @@ void* CModule::FindVirtualTable(const std::string& name)
 
 		while (void* vtable = sigIt3.FindNext(false))
 		{
-			if(*(int64_t*)((uintptr_t)vtable - 0x8) == 0)
+			if (*(int64_t*)((uintptr_t)vtable - 0x8) == 0)
 				return (void*)((uintptr_t)vtable + 0x8);
 		}
 	}

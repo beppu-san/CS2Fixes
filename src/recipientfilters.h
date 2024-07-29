@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include "irecipientfilter.h"
 #include "playermanager.h"
 
@@ -26,7 +27,9 @@ class CSingleRecipientFilter : public IRecipientFilter
 {
 public:
 	CSingleRecipientFilter(CPlayerSlot iRecipient, NetChannelBufType_t nBufType = BUF_RELIABLE, bool bInitMessage = false) :
-		m_iRecipient(iRecipient), m_nBufType(nBufType), m_bInitMessage(bInitMessage) {}
+		m_iRecipient(iRecipient),
+		m_nBufType(nBufType),
+		m_bInitMessage(bInitMessage) {}
 
 	~CSingleRecipientFilter() override {}
 
@@ -51,7 +54,7 @@ public:
 		m_bInitMessage = false;
 	}
 
-	CRecipientFilter(IRecipientFilter *source, int iExcept = -1)
+	CRecipientFilter(IRecipientFilter* source, int iExcept = -1)
 	{
 		m_nBufType = source->GetNetworkBufType();
 		m_bInitMessage = source->IsInitMessage();

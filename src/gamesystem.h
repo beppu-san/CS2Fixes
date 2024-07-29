@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #include "common.h"
@@ -30,25 +31,22 @@ public:
 	GS_EVENT(BuildGameSessionManifest);
 	GS_EVENT(ServerPreEntityThink);
 	GS_EVENT(ServerPostEntityThink);
-	
+
 	void Shutdown() override
 	{
 		Message("CGameSystem::Shutdown\n");
 		delete sm_Factory;
 	}
 
-	void SetGameSystemGlobalPtrs(void *pValue) override
+	void SetGameSystemGlobalPtrs(void* pValue) override
 	{
 		if (sm_Factory)
 			sm_Factory->SetGlobalPtr(pValue);
 	}
 
-	bool DoesGameSystemReallocate() override
-	{
-		return sm_Factory->ShouldAutoAdd();
-	}
+	bool DoesGameSystemReallocate() override { return sm_Factory->ShouldAutoAdd(); }
 
-	static IGameSystemFactory *sm_Factory;
+	static IGameSystemFactory* sm_Factory;
 };
 
 // Quick and dirty definition

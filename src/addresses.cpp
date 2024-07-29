@@ -23,7 +23,7 @@
 
 #include "tier0/memdbgon.h"
 
-extern CGameConfig *g_GameConfig;
+extern CGameConfig* g_GameConfig;
 
 #define RESOLVE_SIG(gameConfig, name, variable) \
 	variable = (decltype(variable))gameConfig->ResolveSignature(name);	\
@@ -31,7 +31,7 @@ extern CGameConfig *g_GameConfig;
 		return false;													\
 	Message("Found %s at 0x%p\n", name, variable);
 
-bool addresses::Initialize(CGameConfig *g_GameConfig)
+bool addresses::Initialize(CGameConfig* g_GameConfig)
 {
 	modules::engine = new CModule(ROOTBIN, "engine2");
 	modules::tier0 = new CModule(ROOTBIN, "tier0");

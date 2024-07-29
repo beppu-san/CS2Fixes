@@ -45,7 +45,7 @@ enum gear_slot_t : uint32_t
 class CEconItemView
 {
 public:
-	DECLARE_SCHEMA_CLASS_INLINE(CEconItemView);
+	DECLARE_SCHEMA_CLASS_INLINE(CEconItemView)
 
 	SCHEMA_FIELD(uint16_t, m_iItemDefinitionIndex)
 	SCHEMA_FIELD(bool, m_bInitialized)
@@ -54,7 +54,7 @@ public:
 class CAttributeContainer
 {
 public:
-	DECLARE_SCHEMA_CLASS_INLINE(CAttributeContainer);
+	DECLARE_SCHEMA_CLASS_INLINE(CAttributeContainer)
 
 	SCHEMA_FIELD(CEconItemView, m_Item)
 };
@@ -71,6 +71,7 @@ class CBasePlayerWeaponVData : public CEntitySubclassVDataBase
 {
 public:
 	DECLARE_SCHEMA_CLASS(CBasePlayerWeaponVData)
+
 	SCHEMA_FIELD(int, m_iMaxClip1)
 };
 
@@ -81,7 +82,7 @@ public:
 
 	SCHEMA_FIELD(gear_slot_t, m_GearSlot)
 	SCHEMA_FIELD(int, m_nPrice)
-	SCHEMA_FIELD(int, m_nPrimaryReserveAmmoMax);
+	SCHEMA_FIELD(int, m_nPrimaryReserveAmmoMax)
 };
 
 class CBasePlayerWeapon : public CEconEntity

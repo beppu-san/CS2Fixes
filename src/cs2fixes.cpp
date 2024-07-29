@@ -67,7 +67,7 @@ float g_flLastTickedTime;
 bool g_bHasTicked;
 int g_iRoundNum = 0;
 
-void Message(const char *msg, ...)
+void Message(const char* msg, ...)
 {
 	va_list args;
 	va_start(args, msg);
@@ -80,7 +80,7 @@ void Message(const char *msg, ...)
 	va_end(args);
 }
 
-void Panic(const char *msg, ...)
+void Panic(const char* msg, ...)
 {
 	va_list args;
 	va_start(args, msg);
@@ -99,38 +99,37 @@ SH_DECL_HOOK3_void(IServerGameDLL, GameFrame, SH_NOATTRIB, 0, bool, bool, bool);
 SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIActivated, SH_NOATTRIB, 0);
 SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIDeactivated, SH_NOATTRIB, 0);
 SH_DECL_HOOK1_void(IServerGameDLL, ApplyGameSettings, SH_NOATTRIB, 0, KeyValues*);
-SH_DECL_HOOK4_void(IServerGameClients, ClientActive, SH_NOATTRIB, 0, CPlayerSlot, bool, const char *, uint64);
-SH_DECL_HOOK5_void(IServerGameClients, ClientDisconnect, SH_NOATTRIB, 0, CPlayerSlot, ENetworkDisconnectionReason, const char *, uint64, const char *);
-SH_DECL_HOOK4_void(IServerGameClients, ClientPutInServer, SH_NOATTRIB, 0, CPlayerSlot, char const *, int, uint64);
-SH_DECL_HOOK1_void(IServerGameClients, ClientSettingsChanged, SH_NOATTRIB, 0, CPlayerSlot );
-SH_DECL_HOOK6_void(IServerGameClients, OnClientConnected, SH_NOATTRIB, 0, CPlayerSlot, const char*, uint64, const char *, const char *, bool);
-SH_DECL_HOOK6(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, CPlayerSlot, const char*, uint64, const char *, bool, CBufferString *);
-SH_DECL_HOOK8_void(IGameEventSystem, PostEventAbstract, SH_NOATTRIB, 0, CSplitScreenSlot, bool, int, const uint64*,
-	INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t)
+SH_DECL_HOOK4_void(IServerGameClients, ClientActive, SH_NOATTRIB, 0, CPlayerSlot, bool, const char*, uint64);
+SH_DECL_HOOK5_void(IServerGameClients, ClientDisconnect, SH_NOATTRIB, 0, CPlayerSlot, ENetworkDisconnectionReason, const char*, uint64, const char*);
+SH_DECL_HOOK4_void(IServerGameClients, ClientPutInServer, SH_NOATTRIB, 0, CPlayerSlot, char const*, int, uint64);
+SH_DECL_HOOK1_void(IServerGameClients, ClientSettingsChanged, SH_NOATTRIB, 0, CPlayerSlot);
+SH_DECL_HOOK6_void(IServerGameClients, OnClientConnected, SH_NOATTRIB, 0, CPlayerSlot, const char*, uint64, const char*, const char*, bool);
+SH_DECL_HOOK6(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, CPlayerSlot, const char*, uint64, const char*, bool, CBufferString*);
+SH_DECL_HOOK8_void(IGameEventSystem, PostEventAbstract, SH_NOATTRIB, 0, CSplitScreenSlot, bool, int, const uint64*, INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t);
 SH_DECL_HOOK3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*);
-SH_DECL_HOOK7_void(ISource2GameEntities, CheckTransmit, SH_NOATTRIB, 0, CCheckTransmitInfo **, int, CBitVec<16384> &, const Entity2Networkable_t **, const uint16 *, int, bool);
-SH_DECL_HOOK2_void(IServerGameClients, ClientCommand, SH_NOATTRIB, 0, CPlayerSlot, const CCommand &);
+SH_DECL_HOOK7_void(ISource2GameEntities, CheckTransmit, SH_NOATTRIB, 0, CCheckTransmitInfo**, int, CBitVec<16384>&, const Entity2Networkable_t**, const uint16*, int, bool);
+SH_DECL_HOOK2_void(IServerGameClients, ClientCommand, SH_NOATTRIB, 0, CPlayerSlot, const CCommand&);
 SH_DECL_HOOK3_void(ICvar, DispatchConCommand, SH_NOATTRIB, 0, ConCommandHandle, const CCommandContext&, const CCommand&);
 SH_DECL_MANUALHOOK1_void(CGamePlayerEquipUse, 0, 0, 0, InputData_t*);
 SH_DECL_MANUALHOOK2_void(CreateWorkshopMapGroup, 0, 0, 0, const char*, const CUtlStringList&);
-SH_DECL_MANUALHOOK1(OnTakeDamage_Alive, 0, 0, 0, bool, CTakeDamageInfoContainer *);
+SH_DECL_MANUALHOOK1(OnTakeDamage_Alive, 0, 0, 0, bool, CTakeDamageInfoContainer*);
 SH_DECL_MANUALHOOK1_void(CheckMovingGround, 0, 0, 0, double);
-SH_DECL_HOOK2(IGameEventManager2, LoadEventsFromFile, SH_NOATTRIB, 0, int, const char *, bool);
+SH_DECL_HOOK2(IGameEventManager2, LoadEventsFromFile, SH_NOATTRIB, 0, int, const char*, bool);
 
 CS2Fixes g_CS2Fixes;
 
-IGameEventSystem *g_gameEventSystem = nullptr;
-IGameEventManager2 *g_gameEventManager = nullptr;
-INetworkGameServer *g_pNetworkGameServer = nullptr;
-CGameEntitySystem *g_pEntitySystem = nullptr;
-CEntityListener *g_pEntityListener = nullptr;
-CGlobalVars *gpGlobals = nullptr;
-CPlayerManager *g_playerManager = nullptr;
-IVEngineServer2 *g_pEngineServer2 = nullptr;
-CGameConfig *g_GameConfig = nullptr;
-ISteamHTTP *g_http = nullptr;
+IGameEventSystem* g_gameEventSystem = nullptr;
+IGameEventManager2* g_gameEventManager = nullptr;
+INetworkGameServer* g_pNetworkGameServer = nullptr;
+CGameEntitySystem* g_pEntitySystem = nullptr;
+CEntityListener* g_pEntityListener = nullptr;
+CGlobalVars* gpGlobals = nullptr;
+CPlayerManager* g_playerManager = nullptr;
+IVEngineServer2* g_pEngineServer2 = nullptr;
+CGameConfig* g_GameConfig = nullptr;
+ISteamHTTP* g_http = nullptr;
 CSteamGameServerAPIContext g_steamAPI;
-CCSGameRules *g_pGameRules = nullptr;
+CCSGameRules* g_pGameRules = nullptr;
 IGameTypes* g_pGameTypes = nullptr;
 int g_iCGamePlayerEquipUseId = -1;
 int g_iCreateWorkshopMapGroupId = -1;
@@ -138,14 +137,14 @@ int g_iOnTakeDamageAliveId = -1;
 int g_iCheckMovingGroundId = -1;
 int g_iLoadEventsFromFileId = -1;
 
-CGameEntitySystem *GameEntitySystem()
+CGameEntitySystem* GameEntitySystem()
 {
 	static int offset = g_GameConfig->GetOffset("GameEntitySystem");
-	return *reinterpret_cast<CGameEntitySystem **>((uintptr_t)(g_pGameResourceServiceServer) + offset);
+	return *reinterpret_cast<CGameEntitySystem**>((uintptr_t)(g_pGameResourceServiceServer)+offset);
 }
 
 PLUGIN_EXPOSE(CS2Fixes, g_CS2Fixes);
-bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool late)
+bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool late)
 {
 	PLUGIN_SAVEVARS();
 
@@ -167,7 +166,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 	// Required to get the IMetamodListener events
 	g_SMAPI->AddListener(this, this);
 
-	Message( "Starting plugin.\n" );
+	Message("Starting plugin.\n");
 
 	CBufferStringGrowable<256> gamedirpath;
 	g_pEngineServer2->GetGameDir(gamedirpath);
@@ -189,7 +188,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 	int offset = g_GameConfig->GetOffset("IGameTypes_CreateWorkshopMapGroup");
 	SH_MANUALHOOK_RECONFIGURE(CreateWorkshopMapGroup, offset, 0, 0);
 
-    SH_ADD_HOOK(IServerGameDLL, GameFrame, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameFramePost), true);
+	SH_ADD_HOOK(IServerGameDLL, GameFrame, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameFramePost), true);
 	SH_ADD_HOOK(IServerGameDLL, GameServerSteamAPIActivated, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameServerSteamAPIActivated), false);
 	SH_ADD_HOOK(IServerGameDLL, GameServerSteamAPIDeactivated, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameServerSteamAPIDeactivated), false);
 	SH_ADD_HOOK(IServerGameDLL, ApplyGameSettings, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_ApplyGameSettings), false);
@@ -198,7 +197,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 	SH_ADD_HOOK(IServerGameClients, ClientPutInServer, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientPutInServer), true);
 	SH_ADD_HOOK(IServerGameClients, ClientSettingsChanged, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientSettingsChanged), false);
 	SH_ADD_HOOK(IServerGameClients, OnClientConnected, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_OnClientConnected), false);
-	SH_ADD_HOOK(IServerGameClients, ClientConnect, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientConnect), false );
+	SH_ADD_HOOK(IServerGameClients, ClientConnect, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientConnect), false);
 	SH_ADD_HOOK(IServerGameClients, ClientCommand, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientCommand), false);
 	SH_ADD_HOOK(IGameEventSystem, PostEventAbstract, g_gameEventSystem, SH_MEMBER(this, &CS2Fixes::Hook_PostEvent), false);
 	SH_ADD_HOOK(INetworkServerService, StartupServer, g_pNetworkServerService, SH_MEMBER(this, &CS2Fixes::Hook_StartupServer), true);
@@ -206,7 +205,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 	SH_ADD_HOOK(ICvar, DispatchConCommand, g_pCVar, SH_MEMBER(this, &CS2Fixes::Hook_DispatchConCommand), false);
 	g_iCreateWorkshopMapGroupId = SH_ADD_MANUALVPHOOK(CreateWorkshopMapGroup, g_pGameTypes, SH_MEMBER(this, &CS2Fixes::Hook_CreateWorkshopMapGroup), false);
 
-	META_CONPRINTF( "All hooks started!\n" );
+	META_CONPRINTF("All hooks started!\n");
 
 	bool bRequiredInitLoaded = true;
 
@@ -274,7 +273,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 		return false;
 	}
 
-	Message( "All hooks started!\n" );
+	Message("All hooks started!\n");
 
 	UnlockConVars();
 	UnlockConCommands();
@@ -305,24 +304,24 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 
 	// Check hide distance
 	new CTimer(0.5f, true, true, []()
-	{
-		g_playerManager->CheckHideDistances();
-		return 0.5f;
-	});
+		{
+			g_playerManager->CheckHideDistances();
+			return 0.5f;
+		});
 
 	// Check for the expiration of infractions like mutes or gags
 	new CTimer(30.0f, true, true, []()
-	{
-		g_playerManager->CheckInfractions();
-		return 30.0f;
-	});
+		{
+			g_playerManager->CheckInfractions();
+			return 30.0f;
+		});
 
 	// Check for idle players and kick them if permitted by cs2f_idle_kick_* 'convars'
 	new CTimer(5.0f, true, true, []()
-	{
-		g_pIdleSystem->CheckForIdleClients();
-		return 5.0f;
-	});
+		{
+			g_pIdleSystem->CheckForIdleClients();
+			return 5.0f;
+		});
 
 	// run our cfg
 	g_pEngineServer2->ServerCommand("exec cs2fixes/cs2fixes");
@@ -334,9 +333,9 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 	return true;
 }
 
-bool CS2Fixes::Unload(char *error, size_t maxlen)
+bool CS2Fixes::Unload(char* error, size_t maxlen)
 {
-    SH_REMOVE_HOOK(IServerGameDLL, GameFrame, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameFramePost), true);
+	SH_REMOVE_HOOK(IServerGameDLL, GameFrame, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameFramePost), true);
 	SH_REMOVE_HOOK(IServerGameDLL, GameServerSteamAPIActivated, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameServerSteamAPIActivated), false);
 	SH_REMOVE_HOOK(IServerGameDLL, GameServerSteamAPIDeactivated, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameServerSteamAPIDeactivated), false);
 	SH_REMOVE_HOOK(IServerGameDLL, ApplyGameSettings, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_ApplyGameSettings), false);
@@ -345,7 +344,7 @@ bool CS2Fixes::Unload(char *error, size_t maxlen)
 	SH_REMOVE_HOOK(IServerGameClients, ClientPutInServer, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientPutInServer), true);
 	SH_REMOVE_HOOK(IServerGameClients, ClientSettingsChanged, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientSettingsChanged), false);
 	SH_REMOVE_HOOK(IServerGameClients, OnClientConnected, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_OnClientConnected), false);
-	SH_REMOVE_HOOK(IServerGameClients, ClientConnect, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientConnect), false );
+	SH_REMOVE_HOOK(IServerGameClients, ClientConnect, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientConnect), false);
 	SH_REMOVE_HOOK(IServerGameClients, ClientCommand, g_pSource2GameClients, SH_MEMBER(this, &CS2Fixes::Hook_ClientCommand), false);
 	SH_REMOVE_HOOK(IGameEventSystem, PostEventAbstract, g_gameEventSystem, SH_MEMBER(this, &CS2Fixes::Hook_PostEvent), false);
 	SH_REMOVE_HOOK(INetworkServerService, StartupServer, g_pNetworkServerService, SH_MEMBER(this, &CS2Fixes::Hook_StartupServer), true);
@@ -431,7 +430,7 @@ void CS2Fixes::Hook_DispatchConCommand(ConCommandHandle cmdHandle, const CComman
 		// Chat messages should generate events regardless
 		if (pController)
 		{
-			IGameEvent *pEvent = g_gameEventManager->CreateEvent("player_chat");
+			IGameEvent* pEvent = g_gameEventManager->CreateEvent("player_chat");
 
 			if (pEvent)
 			{
@@ -444,9 +443,7 @@ void CS2Fixes::Hook_DispatchConCommand(ConCommandHandle cmdHandle, const CComman
 		}
 
 		if (!bGagged && !bSilent && !bFlooding)
-		{
 			SH_CALL(g_pCVar, &ICvar::DispatchConCommand)(cmdHandle, ctx, args);
-		}
 		else if (bFlooding)
 		{
 			if (pController)
@@ -456,12 +453,12 @@ void CS2Fixes::Hook_DispatchConCommand(ConCommandHandle cmdHandle, const CComman
 		{
 			// HACK: At this point, we can safely modify the arg buffer as it won't be passed anywhere else
 			// The string here is originally ("@foo bar"), trim it to be (foo bar)
-			char *pszMessage = (char*)(args.ArgS() + 2);
+			char* pszMessage = (char*)(args.ArgS() + 2);
 			pszMessage[V_strlen(pszMessage) - 1] = 0;
 
 			for (int i = 0; i < gpGlobals->maxClients; i++)
 			{
-				ZEPlayer *pPlayer = g_playerManager->GetPlayer(i);
+				ZEPlayer* pPlayer = g_playerManager->GetPlayer(i);
 
 				if (!pPlayer)
 					continue;
@@ -477,7 +474,7 @@ void CS2Fixes::Hook_DispatchConCommand(ConCommandHandle cmdHandle, const CComman
 		if (bCommand)
 		{
 			// Do the same trimming as with admin chat
-			char *pszMessage = (char *)(args.ArgS() + 2);
+			char* pszMessage = (char*)(args.ArgS() + 2);
 
 			// Host_Say at some point removes the trailing " for whatever reason, so we only remove if it was never called
 			if (bSilent)
@@ -492,7 +489,7 @@ void CS2Fixes::Hook_DispatchConCommand(ConCommandHandle cmdHandle, const CComman
 	RETURN_META(MRES_IGNORED);
 }
 
-void CS2Fixes::Hook_StartupServer(const GameSessionConfiguration_t& config, ISource2WorldSession *pSession, const char *pszMapName)
+void CS2Fixes::Hook_StartupServer(const GameSessionConfiguration_t& config, ISource2WorldSession* pSession, const char* pszMapName)
 {
 	g_pNetworkGameServer = g_pNetworkServerService->GetIGameServer();
 	g_pEntitySystem = GameEntitySystem();
@@ -501,7 +498,7 @@ void CS2Fixes::Hook_StartupServer(const GameSessionConfiguration_t& config, ISou
 
 	Message("Hook_StartupServer: %s\n", pszMapName);
 
-	if(g_bHasTicked)
+	if (g_bHasTicked)
 		RemoveMapTimers();
 
 	g_bHasTicked = false;
@@ -527,7 +524,7 @@ void CS2Fixes::Hook_GameServerSteamAPIActivated()
 	g_http = g_steamAPI.SteamHTTP();
 
 	g_playerManager->OnSteamAPIActivated();
-  
+
 	if (g_bVoteManagerEnable && !g_pMapVoteSystem->IsMapListLoaded())
 		g_pMapVoteSystem->LoadMapList();
 
@@ -546,10 +543,10 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 {
 	// Message( "Hook_PostEvent(%d, %d, %d, %lli)\n", nSlot, bLocalOnly, nClientCount, clients );
 	// Need to explicitly get a pointer to the right function as it's overloaded and SH_CALL can't resolve that
-	static void (IGameEventSystem::*PostEventAbstract)(CSplitScreenSlot, bool, int, const uint64 *,
-					INetworkMessageInternal *, const CNetMessage *, unsigned long, NetChannelBufType_t) = &IGameEventSystem::PostEventAbstract;
+	static void (IGameEventSystem:: * PostEventAbstract)(CSplitScreenSlot, bool, int, const uint64*,
+		INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t) = &IGameEventSystem::PostEventAbstract;
 
-	NetMessageInfo_t *info = pEvent->GetNetMessageInfo();
+	NetMessageInfo_t* info = pEvent->GetNetMessageInfo();
 
 	if (g_bEnableStopSound && info->m_MessageId == GE_FireBulletsId)
 	{
@@ -569,10 +566,10 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 			msg->set_sound_type(9);
 			msg->set_item_def_index(61); // weapon_usp_silencer
 
-			uint64 clientMask = *(uint64 *)clients & g_playerManager->GetSilenceSoundMask();
+			uint64 clientMask = *(uint64*)clients & g_playerManager->GetSilenceSoundMask();
 
 			SH_CALL(g_gameEventSystem, PostEventAbstract)
-			(nSlot, bLocalOnly, nClientCount, &clientMask, pEvent, msg, nSize, bufType);
+				(nSlot, bLocalOnly, nClientCount, &clientMask, pEvent, msg, nSize, bufType);
 
 			msg->set_weapon_id(weapon_id);
 			msg->set_sound_type(sound_type);
@@ -580,12 +577,12 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 		}
 
 		// Filter out people using stop/silence sound from the original event
-		*(uint64 *)clients &= ~g_playerManager->GetStopSoundMask();
-		*(uint64 *)clients &= ~g_playerManager->GetSilenceSoundMask();
+		*(uint64*)clients &= ~g_playerManager->GetStopSoundMask();
+		*(uint64*)clients &= ~g_playerManager->GetSilenceSoundMask();
 	}
 	else if (info->m_MessageId == TE_WorldDecalId)
 	{
-		*(uint64 *)clients &= ~g_playerManager->GetStopDecalsMask();
+		*(uint64*)clients &= ~g_playerManager->GetStopDecalsMask();
 	}
 	else if (info->m_MessageId == GE_Source1LegacyGameEvent)
 	{
@@ -596,25 +593,25 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 
 void CS2Fixes::AllPluginsLoaded()
 {
-	/* This is where we'd do stuff that relies on the mod or other plugins 
+	/* This is where we'd do stuff that relies on the mod or other plugins
 	 * being initialized (for example, cvars added and events registered).
 	 */
 
-	Message( "AllPluginsLoaded\n" );
+	Message("AllPluginsLoaded\n");
 }
 
-CUtlVector<CServerSideClient *> *GetClientList()
+CUtlVector<CServerSideClient*>* GetClientList()
 {
 	if (!g_pNetworkGameServer)
 		return nullptr;
 
 	static int offset = g_GameConfig->GetOffset("CNetworkGameServer_ClientList");
-	return (CUtlVector<CServerSideClient *> *)(&g_pNetworkGameServer[offset]);
+	return (CUtlVector<CServerSideClient*> *)(&g_pNetworkGameServer[offset]);
 }
 
-CServerSideClient *GetClientBySlot(CPlayerSlot slot)
+CServerSideClient* GetClientBySlot(CPlayerSlot slot)
 {
-	CUtlVector<CServerSideClient *> *pClients = GetClientList();
+	CUtlVector<CServerSideClient*>* pClients = GetClientList();
 
 	if (!pClients)
 		return nullptr;
@@ -636,15 +633,15 @@ CON_COMMAND_F(cs2f_fullupdate, "Force a full update for all clients.", FCVAR_LIN
 	FullUpdateAllClients();
 }
 
-void CS2Fixes::Hook_ClientActive( CPlayerSlot slot, bool bLoadGame, const char *pszName, uint64 xuid )
+void CS2Fixes::Hook_ClientActive(CPlayerSlot slot, bool bLoadGame, const char* pszName, uint64 xuid)
 {
-	Message( "Hook_ClientActive(%d, %d, \"%s\", %lli)\n", slot, bLoadGame, pszName, xuid );
+	Message("Hook_ClientActive(%d, %d, \"%s\", %lli)\n", slot, bLoadGame, pszName, xuid);
 }
 
-void CS2Fixes::Hook_ClientCommand( CPlayerSlot slot, const CCommand &args )
+void CS2Fixes::Hook_ClientCommand(CPlayerSlot slot, const CCommand& args)
 {
 #ifdef _DEBUG
-	Message( "Hook_ClientCommand(%d, \"%s\")\n", slot, args.GetCommandString() );
+	Message("Hook_ClientCommand(%d, \"%s\")\n", slot, args.GetCommandString());
 #endif
 
 	if (g_fIdleKickTime > 0.0f)
@@ -670,10 +667,10 @@ void CS2Fixes::Hook_ClientCommand( CPlayerSlot slot, const CCommand &args )
 	}
 }
 
-void CS2Fixes::Hook_ClientSettingsChanged( CPlayerSlot slot )
+void CS2Fixes::Hook_ClientSettingsChanged(CPlayerSlot slot)
 {
 #ifdef _DEBUG
-	Message( "Hook_ClientSettingsChanged(%d)\n", slot );
+	Message("Hook_ClientSettingsChanged(%d)\n", slot);
 #endif
 }
 
@@ -691,9 +688,9 @@ void CS2Fixes::Hook_OnClientConnected(CPlayerSlot slot, const char* pszName, uin
 		g_playerManager->OnBotConnected(slot);
 }
 
-bool CS2Fixes::Hook_ClientConnect( CPlayerSlot slot, const char *pszName, uint64 xuid, const char *pszNetworkID, bool unk1, CBufferString *pRejectReason )
+bool CS2Fixes::Hook_ClientConnect(CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, bool unk1, CBufferString* pRejectReason)
 {
-	Message( "Hook_ClientConnect(%d, \"%s\", %lli, \"%s\", %d, \"%s\")\n", slot, pszName, xuid, pszNetworkID, unk1, pRejectReason->ToGrowable()->Get() );
+	Message("Hook_ClientConnect(%d, \"%s\", %lli, \"%s\", %d, \"%s\")\n", slot, pszName, xuid, pszNetworkID, unk1, pRejectReason->ToGrowable()->Get());
 
 	// Player is banned
 	if (!g_playerManager->OnClientConnected(slot, xuid, pszNetworkID))
@@ -702,9 +699,9 @@ bool CS2Fixes::Hook_ClientConnect( CPlayerSlot slot, const char *pszName, uint64
 	RETURN_META_VALUE(MRES_IGNORED, true);
 }
 
-void CS2Fixes::Hook_ClientPutInServer( CPlayerSlot slot, char const *pszName, int type, uint64 xuid )
+void CS2Fixes::Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, int type, uint64 xuid)
 {
-	Message( "Hook_ClientPutInServer(%d, \"%s\", %d, %d, %lli)\n", slot, pszName, type, xuid );
+	Message("Hook_ClientPutInServer(%d, \"%s\", %d, %d, %lli)\n", slot, pszName, type, xuid);
 
 	if (!g_playerManager->GetPlayer(slot))
 		return;
@@ -715,9 +712,9 @@ void CS2Fixes::Hook_ClientPutInServer( CPlayerSlot slot, char const *pszName, in
 		ZR_Hook_ClientPutInServer(slot, pszName, type, xuid);
 }
 
-void CS2Fixes::Hook_ClientDisconnect( CPlayerSlot slot, ENetworkDisconnectionReason reason, const char *pszName, uint64 xuid, const char *pszNetworkID )
+void CS2Fixes::Hook_ClientDisconnect(CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID)
 {
-	Message( "Hook_ClientDisconnect(%d, %d, \"%s\", %lli)\n", slot, reason, pszName, xuid );
+	Message("Hook_ClientDisconnect(%d, %d, \"%s\", %lli)\n", slot, reason, pszName, xuid);
 	ZEPlayer* pPlayer = g_playerManager->GetPlayer(slot);
 
 	// Dont add to c_listdc clients that are downloading MultiAddonManager stuff or were present during a map change
@@ -774,13 +771,13 @@ void CS2Fixes::Hook_GameFramePost(bool simulating, bool bFirstTick, bool bLastTi
 	if (g_bEnableZR)
 		CZRRegenTimer::Tick();
 
-    EntityHandler_OnGameFramePost(simulating, gpGlobals->tickcount);
+	EntityHandler_OnGameFramePost(simulating, gpGlobals->tickcount);
 }
 
 extern bool g_bFlashLightTransmitOthers;
 
-void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo **ppInfoList, int infoCount, CBitVec<16384> &unionTransmitEdicts,
-								const Entity2Networkable_t **pNetworkables, const uint16 *pEntityIndicies, int nEntities, bool bEnablePVSBits)
+void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount, CBitVec<16384>& unionTransmitEdicts,
+	const Entity2Networkable_t** pNetworkables, const uint16* pEntityIndicies, int nEntities, bool bEnablePVSBits)
 {
 	if (!g_pEntitySystem)
 		return;
@@ -789,12 +786,12 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo **ppInfoList, int infoCount
 
 	for (int i = 0; i < infoCount; i++)
 	{
-		auto &pInfo = ppInfoList[i];
+		auto& pInfo = ppInfoList[i];
 
 		// the offset happens to have a player index here,
 		// though this is probably part of the client class that contains the CCheckTransmitInfo
 		static int offset = g_GameConfig->GetOffset("CheckTransmitPlayerSlot");
-		int iPlayerSlot = (int)*((uint8 *)pInfo + offset);
+		int iPlayerSlot = (int)*((uint8*)pInfo + offset);
 
 		CCSPlayerController* pSelfController = CCSPlayerController::FromSlot(iPlayerSlot);
 
@@ -815,20 +812,17 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo **ppInfoList, int infoCount
 				continue;
 
 			// Don't transmit other players' flashlights, except the one they're watching if in spec
-			CBarnLight *pFlashLight = pController->IsConnected() ? g_playerManager->GetPlayer(j)->GetFlashLight() : nullptr;
+			CBarnLight* pFlashLight = pController->IsConnected() ? g_playerManager->GetPlayer(j)->GetFlashLight() : nullptr;
 
-			if (!g_bFlashLightTransmitOthers && pFlashLight &&
-				!(pSelfController->GetPawnState() == STATE_OBSERVER_MODE && pSelfController->GetObserverTarget() == pController->GetPawn()))
-			{
+			if (!g_bFlashLightTransmitOthers && pFlashLight && !(pSelfController->GetPawnState() == STATE_OBSERVER_MODE && pSelfController->GetObserverTarget() == pController->GetPawn()))
 				pInfo->m_pTransmitEntity->Clear(pFlashLight->entindex());
-			}
 
 			// Always transmit other players if spectating
 			if (!g_bEnableHide || pSelfController->GetPawnState() == STATE_OBSERVER_MODE)
 				continue;
 
 			// Get the actual pawn as the player could be currently spectating
-			CCSPlayerPawn *pPawn = pController->GetPlayerPawn();
+			CCSPlayerPawn* pPawn = pController->GetPlayerPawn();
 
 			if (!pPawn)
 				continue;
@@ -836,13 +830,13 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo **ppInfoList, int infoCount
 			// Hide players marked as hidden or ANY dead player, it seems that a ragdoll of a previously hidden player can crash?
 			// TODO: Revert this if/when valve fixes the issue?
 			// Also do not hide leaders to other players
-			ZEPlayer *pOtherZEPlayer = g_playerManager->GetPlayer(j);
+			ZEPlayer* pOtherZEPlayer = g_playerManager->GetPlayer(j);
 			if ((pSelfZEPlayer->ShouldBlockTransmit(j) && (pOtherZEPlayer && !pOtherZEPlayer->IsLeader())) || !pPawn->IsAlive())
 				pInfo->m_pTransmitEntity->Clear(pPawn->entindex());
 		}
 
 		// Don't transmit glow model to it's owner
-		CBaseModelEntity *pGlowModel = pSelfZEPlayer->GetGlowModel();
+		CBaseModelEntity* pGlowModel = pSelfZEPlayer->GetGlowModel();
 
 		if (pGlowModel)
 			pInfo->m_pTransmitEntity->Clear(pGlowModel->entindex());
@@ -872,9 +866,9 @@ bool g_bDropMapWeapons = false;
 
 FAKE_BOOL_CVAR(cs2f_drop_map_weapons, "Whether to force drop map-spawned weapons on death", g_bDropMapWeapons, false, false)
 
-bool CS2Fixes::Hook_OnTakeDamage_Alive(CTakeDamageInfoContainer *pInfoContainer)
+bool CS2Fixes::Hook_OnTakeDamage_Alive(CTakeDamageInfoContainer* pInfoContainer)
 {
-	CCSPlayerPawn *pPawn = META_IFACEPTR(CCSPlayerPawn);
+	CCSPlayerPawn* pPawn = META_IFACEPTR(CCSPlayerPawn);
 
 	if (g_bEnableZR && ZR_Hook_OnTakeDamage_Alive(pInfoContainer->pInfo, pPawn))
 		RETURN_META_VALUE(MRES_SUPERCEDE, false);
@@ -889,16 +883,16 @@ bool CS2Fixes::Hook_OnTakeDamage_Alive(CTakeDamageInfoContainer *pInfoContainer)
 
 void CS2Fixes::Hook_CheckMovingGround(double frametime)
 {
-	CCSPlayer_MovementServices *pMove = META_IFACEPTR(CCSPlayer_MovementServices);
-	CCSPlayerPawn *pPawn = pMove->GetPawn();
-	CCSPlayerController *pController = pPawn->GetOriginalController();
+	CCSPlayer_MovementServices* pMove = META_IFACEPTR(CCSPlayer_MovementServices);
+	CCSPlayerPawn* pPawn = pMove->GetPawn();
+	CCSPlayerController* pController = pPawn->GetOriginalController();
 
 	if (!pPawn || !pController)
 		RETURN_META(MRES_IGNORED);
 
 	int iSlot = pController->GetPlayerSlot();
 
-	static int aPlayerTicks[MAXPLAYERS] = {0};
+	static int aPlayerTicks[MAXPLAYERS] = { 0 };
 
 	// The point of doing this is to avoid running the function (and applying/resetting basevelocity) multiple times per tick
 	// This can happen when the client or server lags
@@ -910,19 +904,14 @@ void CS2Fixes::Hook_CheckMovingGround(double frametime)
 	RETURN_META(MRES_IGNORED);
 }
 
-int CS2Fixes::Hook_LoadEventsFromFile(const char *filename, bool bSearchAll)
+int CS2Fixes::Hook_LoadEventsFromFile(const char* filename, bool bSearchAll)
 {
 	ExecuteOnce(g_gameEventManager = META_IFACEPTR(IGameEventManager2));
 
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 }
 
-void CS2Fixes::OnLevelInit( char const *pMapName,
-									 char const *pMapEntities,
-									 char const *pOldLevel,
-									 char const *pLandmarkName,
-									 bool loadGame,
-									 bool background )
+void CS2Fixes::OnLevelInit(char const* pMapName, char const* pMapEntities, char const* pOldLevel, char const* pLandmarkName, bool loadGame, bool background)
 {
 	Message("OnLevelInit(%s)\n", pMapName);
 	g_iRoundNum = 0;
@@ -948,22 +937,22 @@ void CS2Fixes::OnLevelShutdown()
 	Message("OnLevelShutdown()\n");
 }
 
-bool CS2Fixes::Pause(char *error, size_t maxlen)
+bool CS2Fixes::Pause(char* error, size_t maxlen)
 {
 	return true;
 }
 
-bool CS2Fixes::Unpause(char *error, size_t maxlen)
+bool CS2Fixes::Unpause(char* error, size_t maxlen)
 {
 	return true;
 }
 
-const char *CS2Fixes::GetLicense()
+const char* CS2Fixes::GetLicense()
 {
 	return "GPL v3 License";
 }
 
-const char *CS2Fixes::GetVersion()
+const char* CS2Fixes::GetVersion()
 {
 #ifndef CS2FIXES_VERSION
 #define CS2FIXES_VERSION "1.7-dev"
@@ -972,32 +961,32 @@ const char *CS2Fixes::GetVersion()
 	return CS2FIXES_VERSION; // defined by the build script
 }
 
-const char *CS2Fixes::GetDate()
+const char* CS2Fixes::GetDate()
 {
 	return __DATE__;
 }
 
-const char *CS2Fixes::GetLogTag()
+const char* CS2Fixes::GetLogTag()
 {
 	return "CS2Fixes";
 }
 
-const char *CS2Fixes::GetAuthor()
+const char* CS2Fixes::GetAuthor()
 {
 	return "xen, Poggu, and the Source2ZE community";
 }
 
-const char *CS2Fixes::GetDescription()
+const char* CS2Fixes::GetDescription()
 {
 	return "A bunch of experiments thrown together into one big mess of a plugin.";
 }
 
-const char *CS2Fixes::GetName()
+const char* CS2Fixes::GetName()
 {
 	return "CS2Fixes";
 }
 
-const char *CS2Fixes::GetURL()
+const char* CS2Fixes::GetURL()
 {
 	return "https://github.com/Source2ZE/CS2Fixes";
 }

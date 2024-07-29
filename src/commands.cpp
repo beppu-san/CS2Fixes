@@ -45,7 +45,7 @@
 
 using json = nlohmann::json;
 
-extern CGameEntitySystem *g_pEntitySystem;
+extern CGameEntitySystem* g_pEntitySystem;
 extern IVEngineServer2* g_pEngineServer2;
 extern ISteamHTTP* g_http;
 
@@ -239,7 +239,7 @@ void RegisterWeaponCommands()
 	}
 }
 
-void ParseChatCommand(const char *pMessage, CCSPlayerController *pController)
+void ParseChatCommand(const char* pMessage, CCSPlayerController* pController)
 {
 	if (!pController || !pController->IsConnected())
 		return;
@@ -256,19 +256,17 @@ void ParseChatCommand(const char *pMessage, CCSPlayerController *pController)
 	uint16 index = g_CommandList.Find(hash_32_fnv1a_const(name.c_str()));
 
 	if (g_CommandList.IsValidIndex(index))
-	{
 		(*g_CommandList[index])(args, pController);
-	}
 }
 
-bool CChatCommand::CheckCommandAccess(CBasePlayerController *pPlayer, uint64 flags)
+bool CChatCommand::CheckCommandAccess(CBasePlayerController* pPlayer, uint64 flags)
 {
 	if (!pPlayer)
 		return false;
 
 	int slot = pPlayer->GetPlayerSlot();
 
-	ZEPlayer *pZEPlayer = g_playerManager->GetPlayer(slot);
+	ZEPlayer* pZEPlayer = g_playerManager->GetPlayer(slot);
 
 	if (!pZEPlayer->IsAdminFlagSet(flags))
 	{
@@ -279,7 +277,7 @@ bool CChatCommand::CheckCommandAccess(CBasePlayerController *pPlayer, uint64 fla
 	return true;
 }
 
-void ClientPrintAll(int hud_dest, const char *msg, ...)
+void ClientPrintAll(int hud_dest, const char* msg, ...)
 {
 	va_list args;
 	va_start(args, msg);
@@ -293,7 +291,7 @@ void ClientPrintAll(int hud_dest, const char *msg, ...)
 	ConMsg("%s\n", buf);
 }
 
-void ClientPrint(CBasePlayerController *player, int hud_dest, const char *msg, ...)
+void ClientPrint(CBasePlayerController* player, int hud_dest, const char* msg, ...)
 {
 	va_list args;
 	va_start(args, msg);
@@ -312,7 +310,6 @@ void ClientPrint(CBasePlayerController *player, int hud_dest, const char *msg, .
 bool g_bEnableStopSound = false;
 
 FAKE_BOOL_CVAR(cs2f_stopsound_enable, "Whether to enable stopsound", g_bEnableStopSound, false, false)
-
 
 CON_COMMAND_CHAT(stopsound, "- toggle weapon sounds")
 {
@@ -384,7 +381,7 @@ CON_COMMAND_CHAT(hide, "<distance> - hides nearby players")
 		return;
 	}
 
-	ZEPlayer *pZEPlayer = player->GetZEPlayer();
+	ZEPlayer* pZEPlayer = player->GetZEPlayer();
 
 	// Something has to really go wrong for this to happen
 	if (!pZEPlayer)
@@ -405,7 +402,7 @@ CON_COMMAND_CHAT(hide, "<distance> - hides nearby players")
 		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Now hiding players within %i units.", distance);
 }
 
-CON_COMMAND_CHAT(help, "- Display list of commands in console")
+CON_COMMAND_CHAT(help, "- display list of commands in console")
 {
 	std::vector<std::string> rgstrCommands;
 	if (!player)
@@ -446,7 +443,7 @@ CON_COMMAND_CHAT(help, "- Display list of commands in console")
 		ClientPrint(player, HUD_PRINTCONSOLE, "! can be replaced with / for a silent chat command, or c_ for console usage");
 }
 
-CON_COMMAND_CHAT(getpos, "- Get your position and angles")
+CON_COMMAND_CHAT(getpos, "- get your position and angles")
 {
 	if (!player)
 		return;
@@ -458,7 +455,7 @@ CON_COMMAND_CHAT(getpos, "- Get your position and angles")
 	ClientPrint(player, HUD_PRINTCONSOLE, "setpos %f %f %f;setang %f %f %f", vecAbsOrigin.x, vecAbsOrigin.y, vecAbsOrigin.z, angRotation.x, angRotation.y, angRotation.z);
 }
 
-CON_COMMAND_CHAT(info, "<name> - Get a player's information")
+CON_COMMAND_CHAT(info, "<name> - get a player's information")
 {
 	if (args.ArgC() < 2)
 	{
@@ -480,7 +477,7 @@ CON_COMMAND_CHAT(info, "<name> - Get a player's information")
 	{
 		CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[i]);
 		ZEPlayer* zpTarget = pTarget->GetZEPlayer();
-		
+
 		ClientPrint(player, HUD_PRINTCONSOLE, "%s", pTarget->GetPlayerName());
 		ClientPrint(player, HUD_PRINTCONSOLE, "\tUser ID: %s", g_pEngineServer2->GetPlayerUserId(pTarget->GetPlayerSlot()).Get());
 
@@ -496,7 +493,7 @@ CON_COMMAND_CHAT(info, "<name> - Get a player's information")
 	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Printed matching player%s information to console.", (iNumClients == 1) ? "'s" : "s'");
 }
 
-CON_COMMAND_CHAT(showteam, "<name> - Get a player's current team")
+CON_COMMAND_CHAT(showteam, "<name> - get a player's current team")
 {
 	if (args.ArgC() < 2)
 	{
@@ -514,17 +511,17 @@ CON_COMMAND_CHAT(showteam, "<name> - Get a player's current team")
 
 	switch (pTarget->m_iTeamNum())
 	{
-		case CS_TEAM_SPECTATOR:
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is a\x08 spectator\x01.", pTarget->GetPlayerName());
-			break;
-		case CS_TEAM_T:
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is a\x09 terrorist\x01.", pTarget->GetPlayerName());
-			break;
-		case CS_TEAM_CT:
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is a\x0B counter-terrorist\x01.", pTarget->GetPlayerName());
-			break;
-		default:
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is not on a team.", pTarget->GetPlayerName());
+	case CS_TEAM_SPECTATOR:
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is a\x08 spectator\x01.", pTarget->GetPlayerName());
+		break;
+	case CS_TEAM_T:
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is a\x09 terrorist\x01.", pTarget->GetPlayerName());
+		break;
+	case CS_TEAM_CT:
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is a\x0B counter-terrorist\x01.", pTarget->GetPlayerName());
+		break;
+	default:
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is not on a team.", pTarget->GetPlayerName());
 	}
 }
 
@@ -555,7 +552,7 @@ CON_COMMAND_CHAT(fl, "- flashlight")
 	if (!player)
 		return;
 
-	CCSPlayerPawn *pPawn = (CCSPlayerPawn *)player->GetPawn();
+	CCSPlayerPawn* pPawn = (CCSPlayerPawn*)player->GetPawn();
 
 	auto ptr = pPawn->m_pMovementServices->m_nButtons().m_pButtonStates();
 
@@ -566,7 +563,7 @@ CON_COMMAND_CHAT(fl, "- flashlight")
 	origin.z += 64.0f;
 	origin += forward * 54.0f; // The minimum distance such that an awp wouldn't block the light
 
-	CBarnLight *pLight = (CBarnLight *)CreateEntityByName("light_barn");
+	CBarnLight* pLight = (CBarnLight*)CreateEntityByName("light_barn");
 
 	pLight->m_bEnabled = true;
 	pLight->m_Color->SetColor(255, 255, 255, 255);
@@ -582,7 +579,7 @@ CON_COMMAND_CHAT(fl, "- flashlight")
 	pLight->Teleport(&origin, &pPawn->m_angEyeAngles(), nullptr);
 
 	// Have to use keyvalues for this since the schema prop is a resource handle
-	CEntityKeyValues *pKeyValues = new CEntityKeyValues();
+	CEntityKeyValues* pKeyValues = new CEntityKeyValues();
 	pKeyValues->SetString("lightcookie", "materials/effects/lightcookies/flashlight.vtex");
 
 	pLight->DispatchSpawn(pKeyValues);
@@ -607,7 +604,7 @@ CON_COMMAND_CHAT(message, "<id> <message> - message someone")
 		return;
 
 	// skipping the id and space, it's dumb but w/e
-	const char *pMessage = args.ArgS() + V_strlen(args[1]) + 1;
+	const char* pMessage = args.ArgS() + V_strlen(args[1]) + 1;
 
 	ClientPrint(pTarget, HUD_PRINTTALK, CHAT_PREFIX "Private message from %s to %s: \5%s", player->GetPlayerName(), pTarget->GetPlayerName(), pMessage);
 }
@@ -635,7 +632,7 @@ CON_COMMAND_CHAT(sethealth, "<health> - set your health")
 
 	int health = atoi(args[1]);
 
-	CBaseEntity *pEnt = (CBaseEntity *)player->GetPawn();
+	CBaseEntity* pEnt = (CBaseEntity*)player->GetPawn();
 
 	pEnt->m_iHealth = health;
 
@@ -701,7 +698,7 @@ CON_COMMAND_CHAT(setorigin, "<vector> - set your origin")
 	if (!player)
 		return;
 
-	CBasePlayerPawn *pPawn = player->GetPawn();
+	CBasePlayerPawn* pPawn = player->GetPawn();
 	Vector vecNewOrigin;
 	V_StringToVector(args.ArgS(), vecNewOrigin);
 
@@ -718,7 +715,7 @@ CON_COMMAND_CHAT(particle, "- spawn a particle")
 	Vector vecAbsOrigin = player->GetPawn()->GetAbsOrigin();
 	vecAbsOrigin.z += 64.0f;
 
-	CParticleSystem *particle = (CParticleSystem*)CreateEntityByName("info_particle_system");
+	CParticleSystem* particle = (CParticleSystem*)CreateEntityByName("info_particle_system");
 
 	particle->m_bStartActive(true);
 	particle->m_iszEffectName(args[1]);
@@ -738,9 +735,9 @@ CON_COMMAND_CHAT(particle_kv, "- spawn a particle but using keyvalues to spawn")
 	Vector vecAbsOrigin = player->GetPawn()->GetAbsOrigin();
 	vecAbsOrigin.z += 64.0f;
 
-	CParticleSystem *particle = (CParticleSystem *)CreateEntityByName("info_particle_system");
+	CParticleSystem* particle = (CParticleSystem*)CreateEntityByName("info_particle_system");
 
-	CEntityKeyValues *pKeyValues = new CEntityKeyValues();
+	CEntityKeyValues* pKeyValues = new CEntityKeyValues();
 
 	pKeyValues->SetString("effect_name", args[1]);
 	pKeyValues->SetBool("start_active", true);
@@ -768,7 +765,7 @@ CON_COMMAND_CHAT(emitsound, "- emit a sound from the entity under crosshair")
 	if (!player)
 		return;
 
-	CBaseEntity *pEntity = UTIL_FindPickerEntity(player);
+	CBaseEntity* pEntity = UTIL_FindPickerEntity(player);
 
 	if (!pEntity)
 	{
@@ -787,14 +784,14 @@ CON_COMMAND_CHAT(getstats, "- get your stats")
 	if (!player)
 		return;
 
-	CSMatchStats_t *stats = &player->m_pActionTrackingServices->m_matchStats();
+	CSMatchStats_t* stats = &player->m_pActionTrackingServices->m_matchStats();
 
-	ClientPrint(player, HUD_PRINTCENTER, 
+	ClientPrint(player, HUD_PRINTCENTER,
 		"Kills: %i\n"
 		"Deaths: %i\n"
 		"Assists: %i\n"
-		"Damage: %i"
-		, stats->m_iKills.Get(), stats->m_iDeaths.Get(), stats->m_iAssists.Get(), stats->m_iDamage.Get());
+		"Damage: %i",
+		stats->m_iKills.Get(), stats->m_iDeaths.Get(), stats->m_iAssists.Get(), stats->m_iDamage.Get());
 
 	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Kills: %d", stats->m_iKills.Get());
 	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Deaths: %d", stats->m_iDeaths.Get());
@@ -891,6 +888,7 @@ CON_COMMAND_CHAT(http, "<get/post> <url> [content] - test an HTTP request")
 		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Steam HTTP interface is not available!");
 		return;
 	}
+
 	if (args.ArgC() < 3)
 	{
 		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !http <get/post> <url> [content]");

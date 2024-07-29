@@ -24,7 +24,7 @@
 class CTriggerTeleport : public CBaseTrigger
 {
 public:
-	DECLARE_SCHEMA_CLASS(CTriggerTeleport);
+	DECLARE_SCHEMA_CLASS(CTriggerTeleport)
 
 	SCHEMA_FIELD(CUtlSymbolLarge, m_iLandmark)
 	SCHEMA_FIELD(bool, m_bUseLandmarkAngles)

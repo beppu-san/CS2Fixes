@@ -17,8 +17,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #pragma once
+
 #include "cbaseentity.h"
 #include "cbaseplayercontroller.h"
 #include "cbaseplayerpawn.h"
@@ -26,7 +26,7 @@
 class CTeam : public CBaseEntity
 {
 public:
-	DECLARE_SCHEMA_CLASS(CTeam);
+	DECLARE_SCHEMA_CLASS(CTeam)
 
 	SCHEMA_FIELD_POINTER(CUtlVector<CHandle<CBasePlayerController>>, m_aPlayerControllers)
 	SCHEMA_FIELD_POINTER(CUtlVector<CHandle<CBasePlayerPawn>>, m_aPlayers)

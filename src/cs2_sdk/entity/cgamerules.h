@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include <platform.h>
 #include "globaltypes.h"
 #include "cbaseentity.h"
@@ -70,10 +71,7 @@ public:
 	SCHEMA_FIELD_POINTER(CUtlVector<SpawnPoint*>, m_CTSpawnPoints)
 	SCHEMA_FIELD_POINTER(CUtlVector<SpawnPoint*>, m_TerroristSpawnPoints)
 
-	void TerminateRound(float flDelay, CSRoundEndReason reason)
-	{
-		addresses::CGameRules_TerminateRound(this, flDelay, reason, 0, 0);
-	}
+	void TerminateRound(float flDelay, CSRoundEndReason reason) { addresses::CGameRules_TerminateRound(this, flDelay, reason, 0, 0); }
 };
 
 class CCSGameRulesProxy : public CBaseEntity
@@ -81,5 +79,5 @@ class CCSGameRulesProxy : public CBaseEntity
 public:
 	DECLARE_SCHEMA_CLASS(CCSGameRulesProxy)
 
-	SCHEMA_FIELD(CCSGameRules *, m_pGameRules)
+	SCHEMA_FIELD(CCSGameRules*, m_pGameRules)
 };

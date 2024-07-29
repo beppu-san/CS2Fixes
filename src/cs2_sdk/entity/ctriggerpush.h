@@ -27,7 +27,7 @@
 class CTriggerPush : public CBaseTrigger
 {
 public:
-	DECLARE_SCHEMA_CLASS(CTriggerPush);
+	DECLARE_SCHEMA_CLASS(CTriggerPush)
 
 	SCHEMA_FIELD(Vector, m_vecPushDirEntitySpace)
 	SCHEMA_FIELD(bool, m_bTriggerOnStartTouch)

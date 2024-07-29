@@ -32,8 +32,8 @@
 #include "ctimer.h"
 
 extern IGameEventManager2* g_gameEventManager;
-extern IGameEventSystem *g_gameEventSystem;
-extern INetworkMessages *g_pNetworkMessages;
+extern IGameEventSystem* g_gameEventSystem;
+extern INetworkMessages* g_pNetworkMessages;
 
 CPanoramaVoteHandler* g_pPanoramaVoteHandler = nullptr;
 
@@ -73,8 +73,8 @@ void CPanoramaVoteHandler::VoteCast(IGameEvent* pEvent)
 	}
 
 	CheckForEarlyVoteClose();
-	
-	//ClientPrintAll(HUD_PRINTTALK, "VOTE CAST: slot:%d option:%d", pVoter->GetPlayerSlot(), pEvent->GetInt("vote_option"));
+
+	// ClientPrintAll(HUD_PRINTTALK, "VOTE CAST: slot:%d option:%d", pVoter->GetPlayerSlot(), pEvent->GetInt("vote_option"));
 }
 
 void CPanoramaVoteHandler::RemovePlayerFromVote(int iSlot)
@@ -86,13 +86,9 @@ void CPanoramaVoteHandler::RemovePlayerFromVote(int iSlot)
 	for (int i = 0; i < m_iVoterCount; i++)
 	{
 		if (m_iVoters[i] == iSlot)
-		{
 			found = true;
-		}
 		else if (found)
-		{
 			m_iVoters[i - 1] = m_iVoters[i];
-		}
 	}
 
 	if (found)
@@ -113,9 +109,7 @@ bool CPanoramaVoteHandler::IsPlayerInVotePool(int iSlot)
 	for (int i = 0; i < m_iVoterCount; i++)
 	{
 		if (m_iVoters[i] == iSlot)
-		{
 			return true;
-		}
 	}
 
 	return false;
@@ -139,7 +133,7 @@ bool CPanoramaVoteHandler::RedrawVoteToClient(int iSlot)
 	CRecipientFilter pFilter;
 	pFilter.AddRecipient(CPlayerSlot(iSlot));
 	SendVoteStartUM(&pFilter);
-	
+
 	return true;
 }
 
@@ -165,7 +159,7 @@ bool CPanoramaVoteHandler::IsVoteInProgress()
 	return m_bIsVoteInProgress;
 }
 
-bool CPanoramaVoteHandler::SendYesNoVote(float flDuration, int iCaller, const char* sVoteTitle, const char* sDetailStr, IRecipientFilter *pFilter, YesNoVoteResult resultCallback, YesNoVoteHandler handler = nullptr)
+bool CPanoramaVoteHandler::SendYesNoVote(float flDuration, int iCaller, const char* sVoteTitle, const char* sDetailStr, IRecipientFilter* pFilter, YesNoVoteResult resultCallback, YesNoVoteHandler handler = nullptr)
 {
 	if (!hVoteController.Get() || m_bIsVoteInProgress)
 		return false;
@@ -187,7 +181,7 @@ bool CPanoramaVoteHandler::SendYesNoVote(float flDuration, int iCaller, const ch
 	hVoteController->m_iActiveIssueIndex = 2;
 
 	hVoteController->m_iOnlyTeamToVote = -1; // use the recipient filter param to handle who votes
-	
+
 	m_VoteResult = resultCallback;
 	m_VoteHandler = handler;
 
@@ -200,20 +194,19 @@ bool CPanoramaVoteHandler::SendYesNoVote(float flDuration, int iCaller, const ch
 	SendVoteStartUM(pFilter);
 
 	if (m_VoteHandler != nullptr)
-	{
 		(m_VoteHandler)(YesNoVoteAction::VoteAction_Start, 0, 0);
-	}
-	
+
 	int voteNum = m_iVoteCount;
-	new CTimer(flDuration, false, true, [voteNum]() 
+	new CTimer(flDuration, false, true, [voteNum]()
 		{
 			// Ensure we dont end the wrong vote
-			if(voteNum == g_pPanoramaVoteHandler->m_iVoteCount)
+			if (voteNum == g_pPanoramaVoteHandler->m_iVoteCount)
 				g_pPanoramaVoteHandler->EndVote(YesNoVoteEndReason::VoteEnd_TimeUp);
-			return -1.0;
+
+			return -1.0f;
 		}
 	);
-	
+
 	return true;
 }
 
@@ -225,9 +218,9 @@ bool CPanoramaVoteHandler::SendYesNoVoteToAll(float flDuration, int iCaller, con
 	return SendYesNoVote(flDuration, iCaller, sVoteTitle, sDetailStr, &filter, resultCallback, handler);
 }
 
-void CPanoramaVoteHandler::SendVoteStartUM(IRecipientFilter *pFilter)
+void CPanoramaVoteHandler::SendVoteStartUM(IRecipientFilter* pFilter)
 {
-	INetworkMessageInternal *pNetMsg = g_pNetworkMessages->FindNetworkMessagePartial("VoteStart");
+	INetworkMessageInternal* pNetMsg = g_pNetworkMessages->FindNetworkMessagePartial("VoteStart");
 	auto data = pNetMsg->AllocateMessage()->ToPB<CCSUsrMsg_VoteStart>();
 
 	data->set_team(-1);
@@ -242,7 +235,7 @@ void CPanoramaVoteHandler::SendVoteStartUM(IRecipientFilter *pFilter)
 	pNetMsg->DeallocateMessage(data);
 }
 
-void CPanoramaVoteHandler::InitVoters(IRecipientFilter *pFilter)
+void CPanoramaVoteHandler::InitVoters(IRecipientFilter* pFilter)
 {
 	// Clear any old info
 	m_iVoterCount = 0;
@@ -254,7 +247,7 @@ void CPanoramaVoteHandler::InitVoters(IRecipientFilter *pFilter)
 
 	for (int i = 0; i < VOTE_UNCAST; i++)
 		hVoteController->m_nVoteOptionCount[i] = 0;
-	
+
 	m_iVoterCount = pFilter->GetRecipientCount();
 	for (int i = 0, j = 0; i < m_iVoterCount; i++)
 	{
@@ -276,10 +269,10 @@ void CPanoramaVoteHandler::CheckForEarlyVoteClose()
 	if (votes >= m_iVoterCount)
 	{
 		// Do this next frame to prevent a crash
-		new CTimer(0.0, false, true, []() 
+		new CTimer(0.0f, false, true, []()
 			{
 				g_pPanoramaVoteHandler->EndVote(YesNoVoteEndReason::VoteEnd_AllVotes);
-				return -1.0;
+				return -1.0f;
 			}
 		);
 	}
@@ -306,13 +299,13 @@ void CPanoramaVoteHandler::EndVote(YesNoVoteEndReason reason)
 	}
 
 	// Cycle global vote counter
-	if (m_iVoteCount == 99) m_iVoteCount = 0;
-	else m_iVoteCount++;
-		
+	if (m_iVoteCount == 99)
+		m_iVoteCount = 0;
+	else
+		m_iVoteCount++;
+
 	if (m_VoteHandler != nullptr)
-	{
 		(m_VoteHandler)(YesNoVoteAction::VoteAction_End, reason, 0);
-	}
 
 	if (!hVoteController.Get())
 	{
@@ -332,7 +325,7 @@ void CPanoramaVoteHandler::EndVote(YesNoVoteEndReason reason)
 	info.yes_votes = hVoteController->m_nVoteOptionCount[VOTE_OPTION1];
 	info.no_votes = hVoteController->m_nVoteOptionCount[VOTE_OPTION2];
 	info.num_votes = info.yes_votes + info.no_votes;
-	
+
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (i < m_iVoterCount)
@@ -350,18 +343,14 @@ void CPanoramaVoteHandler::EndVote(YesNoVoteEndReason reason)
 	bool passed = (m_VoteResult)(info);
 	//TODO usermessage correctly
 	if (passed)
-	{
 		SendVotePassed();
-	}
 	else
-	{
 		SendVoteFailed();
-	}
 }
 
 void CPanoramaVoteHandler::SendVoteFailed()
 {
-	INetworkMessageInternal *pNetMsg = g_pNetworkMessages->FindNetworkMessagePartial("VoteFailed");
+	INetworkMessageInternal* pNetMsg = g_pNetworkMessages->FindNetworkMessagePartial("VoteFailed");
 
 	auto data = pNetMsg->AllocateMessage()->ToPB<CCSUsrMsg_VoteFailed>();
 

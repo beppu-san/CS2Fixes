@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include "entity/ccsplayercontroller.h"
 #include "convar.h"
 #include "adminsystem.h"
@@ -29,7 +30,7 @@
 #define COMMAND_PREFIX "c_"
 #define CHAT_PREFIX	" \7[CS2Fixes]\1 "
 
-typedef void (*FnChatCommandCallback_t)(const CCommand &args, CCSPlayerController *player);
+typedef void (*FnChatCommandCallback_t)(const CCommand& args, CCSPlayerController* player);
 
 class CChatCommand;
 
@@ -41,20 +42,24 @@ extern bool g_bEnableAdminCommands;
 extern bool g_bEnableHide;
 extern bool g_bEnableStopSound;
 
-void ClientPrintAll(int destination, const char *msg, ...);
-void ClientPrint(CBasePlayerController *player, int destination, const char *msg, ...);
+void ClientPrintAll(int destination, const char* msg, ...);
+void ClientPrint(CBasePlayerController* player, int destination, const char* msg, ...);
 
 // Just a wrapper class so we're able to insert the callback
 class CChatCommand
 {
 public:
-	CChatCommand(const char *cmd, FnChatCommandCallback_t callback, const char *description, uint64 adminFlags = ADMFLAG_NONE, uint64 cmdFlags = CMDFLAG_NONE) :
-		m_pfnCallback(callback), m_sName(cmd), m_sDescription(description), m_nAdminFlags(adminFlags), m_nCmdFlags(cmdFlags)
+	CChatCommand(const char* cmd, FnChatCommandCallback_t callback, const char* description, uint64 adminFlags = ADMFLAG_NONE, uint64 cmdFlags = CMDFLAG_NONE) :
+		m_pfnCallback(callback),
+		m_sName(cmd),
+		m_sDescription(description),
+		m_nAdminFlags(adminFlags),
+		m_nCmdFlags(cmdFlags)
 	{
 		g_CommandList.Insert(hash_32_fnv1a_const(cmd), this);
 	}
 
-	void operator()(const CCommand &args, CCSPlayerController *player)
+	void operator()(const CCommand& args, CCSPlayerController* player)
 	{
 		// Server disabled ALL chat commands
 		if (!g_bEnableCommands)
@@ -75,15 +80,12 @@ public:
 		m_pfnCallback(args, player);
 	}
 
-	static bool CheckCommandAccess(CBasePlayerController *pPlayer, uint64 flags);
+	static bool CheckCommandAccess(CBasePlayerController* pPlayer, uint64 flags);
 
 	const char* GetName() { return m_sName.c_str(); }
 	const char* GetDescription() { return m_sDescription.c_str(); }
 	uint64 GetAdminFlags() { return m_nAdminFlags; }
-	bool IsCommandFlagSet(uint64 iFlag)
-	{
-		return !iFlag || (m_nCmdFlags & iFlag);
-	}
+	bool IsCommandFlagSet(uint64 iFlag) { return !iFlag || (m_nCmdFlags & iFlag); }
 
 private:
 	FnChatCommandCallback_t m_pfnCallback;
@@ -105,7 +107,7 @@ struct WeaponMapEntry_t
 };
 
 void RegisterWeaponCommands();
-void ParseChatCommand(const char *, CCSPlayerController *);
+void ParseChatCommand(const char*, CCSPlayerController*);
 
 #define CON_COMMAND_CHAT_FLAGS(name, description, flags)																						\
 	void name##_callback(const CCommand &args, CCSPlayerController *player);																			\

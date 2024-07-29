@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include <functional>
 #include "funchook.h"
 #include "module.h"
@@ -30,7 +31,7 @@ class CDetourBase
 {
 public:
 	virtual const char* GetName() = 0;
-	virtual bool CreateDetour(CGameConfig *gameConfig) = 0;
+	virtual bool CreateDetour(CGameConfig* gameConfig) = 0;
 	virtual void FreeDetour() = 0;
 	virtual void EnableDetour() = 0;
 	virtual void DisableDetour() = 0;
@@ -40,26 +41,23 @@ template <typename T>
 class CDetour : public CDetourBase
 {
 public:
-	CDetour(T *pfnDetour, const char *pszName);
+	CDetour(T* pfnDetour, const char* pszName);
 
 	~CDetour()
 	{
 		FreeDetour();
 	}
 
-	bool CreateDetour(CGameConfig *gameConfig) override;
+	bool CreateDetour(CGameConfig* gameConfig) override;
 	void EnableDetour();
 	void DisableDetour();
 	void FreeDetour() override;
 	const char* GetName() override { return m_pszName; }
-	T *GetFunc() { return m_pfnFunc; }
+	T* GetFunc() { return m_pfnFunc; }
 
 	// Shorthand for calling original.
 	template <typename... Args>
-	auto operator()(Args &&...args)
-	{
-		return std::invoke(m_pfnFunc, std::forward<Args>(args)...);
-	}
+	auto operator()(Args &&...args) { return std::invoke(m_pfnFunc, std::forward<Args>(args)...); }
 
 private:
 	CModule** m_pModule;
@@ -75,8 +73,9 @@ private:
 extern CUtlVector<CDetourBase*> g_vecDetours;
 
 template <typename T>
-CDetour<T>::CDetour(T *pfnDetour, const char *pszName) :
-	m_pfnDetour(pfnDetour), m_pszName(pszName)
+CDetour<T>::CDetour(T* pfnDetour, const char* pszName) :
+	m_pfnDetour(pfnDetour),
+	m_pszName(pszName)
 {
 	m_hook = nullptr;
 	m_bInstalled = false;
@@ -88,13 +87,13 @@ CDetour<T>::CDetour(T *pfnDetour, const char *pszName) :
 }
 
 template <typename T>
-bool CDetour<T>::CreateDetour(CGameConfig *gameConfig)
+bool CDetour<T>::CreateDetour(CGameConfig* gameConfig)
 {
 	m_pfnFunc = (T*)gameConfig->ResolveSignature(m_pszName);
 	if (!m_pfnFunc)
 		return false;
 
-	T *pFunc = m_pfnFunc;
+	T* pFunc = m_pfnFunc;
 
 	m_hook = funchook_create();
 	funchook_prepare(m_hook, (void**)&m_pfnFunc, (void*)m_pfnDetour);
@@ -120,11 +119,11 @@ void CDetour<T>::EnableDetour()
 template <typename T>
 void CDetour<T>::DisableDetour()
 {
-	if (!m_hook )
+	if (!m_hook)
 		return;
 
 	int error = funchook_uninstall(m_hook, 0);
-	
+
 	if (!error)
 		m_bInstalled = false;
 	else

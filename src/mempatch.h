@@ -26,8 +26,9 @@
 class CMemPatch
 {
 public:
-	CMemPatch(const char *pSignatureName, const char *pszName) :
-		m_pSignatureName(pSignatureName), m_pszName(pszName)
+	CMemPatch(const char* pSignatureName, const char* pszName) :
+		m_pSignatureName(pSignatureName),
+		m_pszName(pszName)
 	{
 		m_pModule = nullptr;
 		m_pPatchAddress = nullptr;
@@ -37,18 +38,18 @@ public:
 		m_iPatchLength = 0;
 	}
 
-	bool PerformPatch(CGameConfig *gameConfig);
+	bool PerformPatch(CGameConfig* gameConfig);
 	void UndoPatch();
 
-	void *GetPatchAddress() { return m_pPatchAddress; }
+	void* GetPatchAddress() { return m_pPatchAddress; }
 
 private:
-	CModule **m_pModule;
-	const byte *m_pSignature;
-	const byte *m_pPatch;
-	byte *m_pOriginalBytes;
-	const char *m_pSignatureName;
-	const char *m_pszName;
+	CModule** m_pModule;
+	const byte* m_pSignature;
+	const byte* m_pPatch;
+	byte* m_pOriginalBytes;
+	const char* m_pSignatureName;
+	const char* m_pszName;
 	size_t m_iPatchLength;
-	void *m_pPatchAddress;
+	void* m_pPatchAddress;
 };

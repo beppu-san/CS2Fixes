@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -60,4 +61,4 @@ int GetModuleInformation(HINSTANCE module, void** base, size_t* length, std::vec
 #define MODULE_EXT ".so"
 #endif
 
-void Plat_WriteMemory(void* pPatchAddress, uint8_t *pPatch, int iPatchSize);
+void Plat_WriteMemory(void* pPatchAddress, uint8_t* pPatch, int iPatchSize);

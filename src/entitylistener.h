@@ -18,14 +18,15 @@
  */
 
 #pragma once
+
 #include "entitysystem.h"
 
 extern CGameEntitySystem* g_pEntitySystem;
 
 class CEntityListener : public IEntityListener
 {
-    void OnEntitySpawned(CEntityInstance* pEntity) override;
-    void OnEntityCreated(CEntityInstance* pEntity) override;
-    void OnEntityDeleted(CEntityInstance* pEntity) override;
-    void OnEntityParentChanged(CEntityInstance* pEntity, CEntityInstance* pNewParent) override;
+	void OnEntitySpawned(CEntityInstance* pEntity) override;
+	void OnEntityCreated(CEntityInstance* pEntity) override;
+	void OnEntityDeleted(CEntityInstance* pEntity) override;
+	void OnEntityParentChanged(CEntityInstance* pEntity, CEntityInstance* pNewParent) override;
 };

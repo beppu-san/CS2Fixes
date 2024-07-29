@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include <platform.h>
 #include "schema.h"
 #include "soundflags.h"
@@ -147,18 +148,17 @@ struct EmitSound_t
 		m_nSpeakerEntity(-1),
 		m_UtlVecSoundOrigin(),
 		m_nForceGuid(0),
-		m_SpeakerGender(GENDER_NONE)
-	{
-	}
+		m_SpeakerGender(GENDER_NONE) {}
+
 	int m_nChannel;
-	const char *m_pSoundName;
+	const char* m_pSoundName;
 	float m_flVolume;
 	soundlevel_t m_SoundLevel;
 	int m_nFlags;
 	int m_nPitch;
-	const Vector *m_pOrigin;
+	const Vector* m_pOrigin;
 	float m_flSoundTime;
-	float *m_pflSoundDuration;
+	float* m_pflSoundDuration;
 	bool m_bEmitCloseCaption;
 	bool m_bWarnOnMissingCloseCaption;
 	bool m_bWarnOnDirectWaveReference;

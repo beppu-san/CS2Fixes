@@ -51,12 +51,12 @@ constexpr uint32_t prime_32_const = 0x1000193;
 constexpr uint64_t val_64_const = 0xcbf29ce484222325;
 constexpr uint64_t prime_64_const = 0x100000001b3;
 
-inline constexpr uint32_t hash_32_fnv1a_const(const char *const str, const uint32_t value = val_32_const) noexcept
+inline constexpr uint32_t hash_32_fnv1a_const(const char* const str, const uint32_t value = val_32_const) noexcept
 {
 	return (str[0] == '\0') ? value : hash_32_fnv1a_const(&str[1], (value ^ uint32_t(str[0])) * prime_32_const);
 }
 
-inline constexpr uint64_t hash_64_fnv1a_const(const char *const str, const uint64_t value = val_64_const) noexcept
+inline constexpr uint64_t hash_64_fnv1a_const(const char* const str, const uint64_t value = val_64_const) noexcept
 {
 	return (str[0] == '\0') ? value : hash_64_fnv1a_const(&str[1], (value ^ uint64_t(str[0])) * prime_64_const);
 }
@@ -107,14 +107,14 @@ inline constexpr uint64_t hash_64_fnv1a_const(const char *const str, const uint6
 				else																										\
 					CALL_VIRTUAL(void, 1, pThisClass, m_key.offset + extra_offset, 0xFFFFFFFF, 0xFFFF);						\
 			}																												\
-			*reinterpret_cast<std::add_pointer_t<type>>((uintptr_t)(pThisClass) + m_key.offset + extra_offset) = val;		\
-		}																													\
-		operator std::add_lvalue_reference_t<type>() { return Get(); }														\
-		std::add_lvalue_reference_t<type> operator ()() { return Get(); }													\
-		std::add_lvalue_reference_t<type> operator->() { return Get(); }													\
-		void operator()(type val) { Set(val); }																				\
-		void operator=(type val) { Set(val); }																				\
-	} varName;
+		*reinterpret_cast<std::add_pointer_t<type>>((uintptr_t)(pThisClass)+m_key.offset + extra_offset) = val;		\
+}																													\
+operator std::add_lvalue_reference_t<type>() { return Get(); }														\
+std::add_lvalue_reference_t<type> operator ()() { return Get(); }													\
+std::add_lvalue_reference_t<type> operator->() { return Get(); }													\
+void operator()(type val) { Set(val); }																				\
+void operator=(type val) { Set(val); }																				\
+} varName;
 
 #define SCHEMA_FIELD_POINTER_OFFSET(type, varName, extra_offset)															\
 	class varName##_prop																									\
@@ -149,8 +149,8 @@ inline constexpr uint64_t hash_64_fnv1a_const(const char *const str, const uint6
 
 namespace schema
 {
-	int16_t FindChainOffset(const char *className);
-	SchemaKey GetOffset(const char *className, uint32_t classKey, const char *memberName, uint32_t memberKey);
+	int16_t FindChainOffset(const char* className);
+	SchemaKey GetOffset(const char* className, uint32_t classKey, const char* memberName, uint32_t memberKey);
 }
 
 #define DECLARE_SCHEMA_CLASS_BASE(className, isStruct)			\

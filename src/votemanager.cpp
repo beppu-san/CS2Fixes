@@ -77,16 +77,14 @@ void VoteManager_Init()
 			if (g_ExtendState < EExtendState::POST_EXTEND_NO_EXTENDS_LEFT)
 				g_ExtendState = EExtendState::EXTEND_ALLOWED;
 			return -1.0f;
-		}
-	);
+		});
 
 	new CTimer(g_flRtvDelay, false, true, []()
 		{
 			if (g_RTVState != ERTVState::BLOCKED_BY_ADMIN)
 				g_RTVState = ERTVState::RTV_ALLOWED;
 			return -1.0f;
-		}
-	);
+		});
 
 	new CTimer(flExtendVoteTickrate, false, true, TimerCheckTimeleft);
 }
@@ -141,8 +139,7 @@ float TimerCheckTimeleft()
 			ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "Extend vote starting in %d....", iVoteStartTicks);
 			iVoteStartTicks--;
 			return 1.0f;
-		}
-	);
+		});
 
 	return flExtendVoteTickrate;
 }
@@ -217,7 +214,7 @@ int GetNeededExtendCount()
 	return (int)(iOnlinePlayers * g_flExtendBeginRatio) + 1;
 }
 
-CON_COMMAND_CHAT(rtv, "- Vote to end the current map sooner")
+CON_COMMAND_CHAT(rtv, "- vote to end the current map sooner")
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -290,9 +287,7 @@ CON_COMMAND_CHAT(rtv, "- Vote to end the current map sooner")
 				});
 		}
 		else
-		{
 			ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "RTV succeeded! This is the last round of the map!");
-		}
 
 		for (int i = 0; i < gpGlobals->maxClients; i++)
 		{
@@ -309,7 +304,7 @@ CON_COMMAND_CHAT(rtv, "- Vote to end the current map sooner")
 	ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "%s wants to rock the vote (%i voted, %i needed).", player->GetPlayerName(), iCurrentRTVCount + 1, iNeededRTVCount);
 }
 
-CON_COMMAND_CHAT(unrtv, "- Remove your vote to end the current map sooner")
+CON_COMMAND_CHAT(unrtv, "- remove your vote to end the current map sooner")
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -341,7 +336,7 @@ CON_COMMAND_CHAT(unrtv, "- Remove your vote to end the current map sooner")
 	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You no longer want to RTV current map.");
 }
 
-CON_COMMAND_CHAT(ve, "- Vote to extend current map")
+CON_COMMAND_CHAT(ve, "- vote to extend current map")
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -361,7 +356,6 @@ CON_COMMAND_CHAT(ve, "- Vote to extend current map")
 		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Extend votes are disabled.");
 		return;
 	case EExtendVoteMode::EXTENDVOTE_AUTO:
-	{
 		if (g_ExtendState == EExtendState::EXTEND_ALLOWED)
 		{
 			ConVar* cvar = g_pCVar->GetConVar(g_pCVar->FindConVar("mp_timelimit"));
@@ -385,7 +379,6 @@ CON_COMMAND_CHAT(ve, "- Vote to extend current map")
 				ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "An extend vote will start in %i seconds", iSecondsLeft);
 			return;
 		}
-	}
 	}
 
 	int iPlayer = player->GetPlayerSlot();
@@ -443,7 +436,6 @@ CON_COMMAND_CHAT(ve, "- Vote to extend current map")
 	if (iCurrentExtendCount + 1 >= iNeededExtendCount)
 	{
 		StartExtendVote(VOTE_CALLER_SERVER);
-
 		return;
 	}
 
@@ -452,7 +444,7 @@ CON_COMMAND_CHAT(ve, "- Vote to extend current map")
 	ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "%s wants to extend the map (%i voted, %i needed).", player->GetPlayerName(), iCurrentExtendCount + 1, iNeededExtendCount);
 }
 
-CON_COMMAND_CHAT(unve, "- Remove your vote to extend current map")
+CON_COMMAND_CHAT(unve, "- remove your vote to extend current map")
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -490,7 +482,7 @@ CON_COMMAND_CHAT(unve, "- Remove your vote to extend current map")
 	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You no longer want to extend current map.");
 }
 
-CON_COMMAND_CHAT_FLAGS(adminve, "Start a vote extend immediately.", ADMFLAG_CHANGEMAP)
+CON_COMMAND_CHAT_FLAGS(adminve, "- start a vote extend immediately.", ADMFLAG_CHANGEMAP)
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -514,7 +506,7 @@ CON_COMMAND_CHAT_FLAGS(adminve, "Start a vote extend immediately.", ADMFLAG_CHAN
 	StartExtendVote(slot);
 }
 
-CON_COMMAND_CHAT_FLAGS(disablertv, "- Disable the ability for players to vote to end current map sooner", ADMFLAG_CHANGEMAP)
+CON_COMMAND_CHAT_FLAGS(disablertv, "- disable the ability for players to vote to end current map sooner", ADMFLAG_CHANGEMAP)
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -535,7 +527,7 @@ CON_COMMAND_CHAT_FLAGS(disablertv, "- Disable the ability for players to vote to
 	ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX ADMIN_PREFIX "disabled vote for RTV.", pszCommandPlayerName);
 }
 
-CON_COMMAND_CHAT_FLAGS(enablertv, "- Restore the ability for players to vote to end current map sooner", ADMFLAG_CHANGEMAP)
+CON_COMMAND_CHAT_FLAGS(enablertv, "- restore the ability for players to vote to end current map sooner", ADMFLAG_CHANGEMAP)
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -556,7 +548,7 @@ CON_COMMAND_CHAT_FLAGS(enablertv, "- Restore the ability for players to vote to 
 	ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX ADMIN_PREFIX "enabled vote for RTV.", pszCommandPlayerName);
 }
 
-CON_COMMAND_CHAT_FLAGS(addextend, "- Add another extend to the current map for players to vote", ADMFLAG_RCON)
+CON_COMMAND_CHAT_FLAGS(addextend, "- add another extend to the current map for players to vote", ADMFLAG_RCON)
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -580,7 +572,7 @@ CON_COMMAND_CHAT_FLAGS(addextend, "- Add another extend to the current map for p
 	ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX ADMIN_PREFIX "allowed for an additional extend.", pszCommandPlayerName);
 }
 
-CON_COMMAND_CHAT(extendsleft, "- Display amount of extends left for the current map")
+CON_COMMAND_CHAT(extendsleft, "- display amount of extends left for the current map")
 {
 	if (!g_bVoteManagerEnable)
 		return;
@@ -606,7 +598,7 @@ CON_COMMAND_CHAT(extendsleft, "- Display amount of extends left for the current 
 		ConMsg("%s", message);
 }
 
-CON_COMMAND_CHAT(timeleft, "- Display time left to end of current map.")
+CON_COMMAND_CHAT(timeleft, "- display time left to end of current map.")
 {
 	if (!player)
 	{
@@ -687,6 +679,7 @@ void VoteExtendHandler(YesNoVoteAction action, int param1, int param2)
 		CCSPlayerController* pController = CCSPlayerController::FromSlot(param1);
 		if (!pController || !pController->IsController() || !pController->IsConnected())
 			break;
+
 		ClientPrint(pController, HUD_PRINTTALK, CHAT_PREFIX "Thanks for voting! Type !revote to change your vote!");
 		break;
 	}
@@ -697,11 +690,8 @@ void VoteExtendHandler(YesNoVoteAction action, int param1, int param2)
 			// Admin cancelled so stop further automatic votes
 			// It will reenable if an admin manually calls a vote
 			if (g_ExtendVoteMode == EExtendVoteMode::EXTENDVOTE_AUTO)
-			{
 				g_ExtendState = EExtendState::POST_EXTEND_NO_EXTENDS_LEFT;
-			}
 		}
-
 		break;
 	}
 	}
@@ -732,7 +722,7 @@ bool VoteExtendEndCallback(YesNoVoteInfo info)
 			if (g_ExtendVoteMode == EExtendVoteMode::EXTENDVOTE_AUTO)
 			{
 				//small delay to allow cvar change to go through
-				new CTimer(0.1, false, true, []()
+				new CTimer(0.1f, false, true, []()
 					{
 						g_ExtendState = EExtendState::EXTEND_ALLOWED;
 						return -1.0f;
@@ -799,6 +789,5 @@ void StartExtendVote(int iCaller)
 			ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "Extend vote ending in %d....", iVoteEndTicks);
 			iVoteEndTicks--;
 			return 1.0f;
-		}
-	);
+		});
 }

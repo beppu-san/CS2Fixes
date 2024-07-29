@@ -83,7 +83,7 @@ void* CModule::FindVirtualTable(const std::string& name)
 	{
 		auto completeObjectLocatorHeader = (uintptr_t)completeObjectLocator - 0xC;
 		// check RTTI Complete Object Locator header, always 0x1
-		if(*(int32_t*)(completeObjectLocatorHeader) != 1)
+		if (*(int32_t*)(completeObjectLocatorHeader) != 1)
 			continue;
 
 		// check RTTI Complete Object Locator vtable offset

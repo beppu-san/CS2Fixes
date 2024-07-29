@@ -37,7 +37,7 @@ enum class PlayerConnectedState : uint32_t
 class CBasePlayerController : public CBaseEntity
 {
 public:
-	DECLARE_SCHEMA_CLASS(CBasePlayerController);
+	DECLARE_SCHEMA_CLASS(CBasePlayerController)
 
 	SCHEMA_FIELD(uint64, m_steamID)
 	SCHEMA_FIELD(CHandle<CBasePlayerPawn>, m_hPawn)
@@ -49,12 +49,10 @@ public:
 	// - The player's actual pawn
 	// - An observer pawn if spectating
 	// - A bot pawn if controlling one
-	CBasePlayerPawn *GetPawn() { return m_hPawn.Get(); }
-	const char *GetPlayerName() { return m_iszPlayerName(); }
+	CBasePlayerPawn* GetPawn() { return m_hPawn.Get(); }
+	const char* GetPlayerName() { return m_iszPlayerName(); }
 	int GetPlayerSlot() { return entindex() - 1; }
 	bool IsConnected() { return m_iConnected() == PlayerConnectedState::PlayerConnected; }
-	void SetPawn(CCSPlayerPawn* pawn)
-	{
-		addresses::CBasePlayerController_SetPawn(this, pawn, true, false, false);
-	}
+
+	void SetPawn(CCSPlayerPawn* pawn) { addresses::CBasePlayerController_SetPawn(this, pawn, true, false, false); }
 };

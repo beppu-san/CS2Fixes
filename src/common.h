@@ -46,8 +46,8 @@
 void UnlockConVars();
 void UnlockConCommands();
 
-void Message(const char *, ...);
-void Panic(const char *, ...);
+void Message(const char*, ...);
+void Panic(const char*, ...);
 
 // CONVAR_TODO
 // Need to replace with actual cvars once available in SDK

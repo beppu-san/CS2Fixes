@@ -24,12 +24,12 @@
 #include "cs2_sdk/entity/cbaseentity.h"
 #include "plat.h"
 
-extern CGameConfig *g_GameConfig;
+extern CGameConfig* g_GameConfig;
 
-void Patch_GetHammerUniqueId(CEntityInstance *pEntity)
+void Patch_GetHammerUniqueId(CEntityInstance* pEntity)
 {
 	static int offset = g_GameConfig->GetOffset("GetHammerUniqueId");
-	void **vtable = *(void ***)pEntity;
+	void** vtable = *(void***)pEntity;
 
 	// xor al, al -> mov al, 1
 	// so it always returns true and allows hammerid to be copied into the schema prop

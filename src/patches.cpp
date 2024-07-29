@@ -5,7 +5,6 @@
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, version 3.0, as published by the
  * Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -29,7 +28,7 @@
 
 #include "tier0/memdbgon.h"
 
-extern CGameConfig *g_GameConfig;
+extern CGameConfig* g_GameConfig;
 
 CMemPatch g_CommonPatches[] =
 {
@@ -89,7 +88,7 @@ CON_COMMAND_F(cs2f_movement_unlocker_enable, "Whether to enable movement unlocke
 	}
 }
 
-bool InitPatches(CGameConfig *g_GameConfig)
+bool InitPatches(CGameConfig* g_GameConfig)
 {
 	bool success = true;
 	for (int i = 0; i < sizeof(g_CommonPatches) / sizeof(*g_CommonPatches); i++)

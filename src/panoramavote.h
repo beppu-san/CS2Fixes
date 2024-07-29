@@ -81,6 +81,7 @@ public:
 		m_VoteHandler = nullptr;
 		m_VoteResult = nullptr;
 	}
+
 	int m_iVoteCount;
 
 	void Reset();

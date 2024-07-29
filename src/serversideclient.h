@@ -13,19 +13,19 @@ public:
 	virtual ~CServerSideClient() = 0;
 
 	INetChannel* GetNetChannel() const { return m_NetChannel; };
-    CPlayerSlot GetPlayerSlot() const { return m_nClientSlot; };
-    CEntityIndex GetEntityIndex() const { return m_nEntityIndex; };
-    CPlayerUserId GetUserID() const { return m_UserID; };
-    int GetSignonState() const { return m_nSignonState; }
-    CSteamID GetClientSteamID() const { return m_SteamID; }
-    const char* GetClientName() const { return m_Name; };
-    bool IsConnected() const { return m_nSignonState >= SIGNONSTATE_CONNECTED; };
-    bool IsSpawned() const { return m_nSignonState >= SIGNONSTATE_NEW; };
-    bool IsActive() const { return m_nSignonState == SIGNONSTATE_FULL; };
-    bool IsFakeClient() const { return m_bFakePlayer; };
-    bool IsHLTV() const { return m_bIsHLTV; }
-    bool IsFullyAuthenticated() { return m_bFullyAuthenticated; }
-    const netadr_t* GetRemoteAddress() const { return &m_NetAdr0; }
+	CPlayerSlot GetPlayerSlot() const { return m_nClientSlot; };
+	CEntityIndex GetEntityIndex() const { return m_nEntityIndex; };
+	CPlayerUserId GetUserID() const { return m_UserID; };
+	int GetSignonState() const { return m_nSignonState; }
+	CSteamID GetClientSteamID() const { return m_SteamID; }
+	const char* GetClientName() const { return m_Name; };
+	bool IsConnected() const { return m_nSignonState >= SIGNONSTATE_CONNECTED; };
+	bool IsSpawned() const { return m_nSignonState >= SIGNONSTATE_NEW; };
+	bool IsActive() const { return m_nSignonState == SIGNONSTATE_FULL; };
+	bool IsFakeClient() const { return m_bFakePlayer; };
+	bool IsHLTV() const { return m_bIsHLTV; }
+	bool IsFullyAuthenticated() { return m_bFullyAuthenticated; }
+	const netadr_t* GetRemoteAddress() const { return &m_NetAdr0; }
 
 	void ForceFullUpdate()
 	{
@@ -34,7 +34,7 @@ public:
 	}
 
 private:
-	[[maybe_unused]] void *m_pVT1; // INetworkMessageProcessingPreFilter
+	[[maybe_unused]] void* m_pVT1; // INetworkMessageProcessingPreFilter
 	[[maybe_unused]] char pad1[0x30];
 #ifdef __linux__
 	[[maybe_unused]] char pad2[0x10];
@@ -43,7 +43,7 @@ private:
 	CPlayerSlot m_nClientSlot;	 // 72 | 88
 	CEntityIndex m_nEntityIndex; // 76 | 92
 	[[maybe_unused]] char pad3[0x8];
-	INetChannel *m_NetChannel; // 88 | 104
+	INetChannel* m_NetChannel; // 88 | 104
 	[[maybe_unused]] char pad4[0x4];
 	int32 m_nSignonState; // 100 | 116
 	[[maybe_unused]] char pad5[0x38];
@@ -64,4 +64,4 @@ private:
 	bool m_bFullyAuthenticated; // 2490 | 2506
 };
 
-CServerSideClient *GetClientBySlot(CPlayerSlot slot);
+CServerSideClient* GetClientBySlot(CPlayerSlot slot);

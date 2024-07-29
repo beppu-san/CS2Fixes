@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include "common.h"
 #include "utlvector.h"
 #include "steam/steam_api_common.h"
@@ -50,7 +51,8 @@
 
 static uint32 iZEPlayerHandleSerial = 0u; // this should actually be 3 bytes large, but no way enough players join in servers lifespan for this to be an issue
 
-enum class ETargetType {
+enum class ETargetType
+{
 	NONE,
 	PLAYER,
 	SELF,
@@ -106,7 +108,7 @@ public:
 	ZEPlayerHandle();
 	ZEPlayerHandle(CPlayerSlot slot); // used for initialization inside ZEPlayer constructor
 	ZEPlayerHandle(const ZEPlayerHandle& other);
-	ZEPlayerHandle(ZEPlayer *pZEPlayer);
+	ZEPlayerHandle(ZEPlayer* pZEPlayer);
 
 	bool IsValid() const { return static_cast<bool>(Get()); }
 
@@ -114,16 +116,16 @@ public:
 	uint32 GetPlayerSlot() const { return m_Parts.m_PlayerSlot; }
 	uint32 GetSerial() const { return m_Parts.m_Serial; }
 
-	bool operator==(const ZEPlayerHandle &other) const { return other.m_Index == m_Index; }
-	bool operator!=(const ZEPlayerHandle &other) const { return other.m_Index != m_Index; }
-	bool operator==(ZEPlayer *pZEPlayer) const;
-	bool operator!=(ZEPlayer *pZEPlayer) const;
+	bool operator==(const ZEPlayerHandle& other) const { return other.m_Index == m_Index; }
+	bool operator!=(const ZEPlayerHandle& other) const { return other.m_Index != m_Index; }
+	bool operator==(ZEPlayer* pZEPlayer) const;
+	bool operator!=(ZEPlayer* pZEPlayer) const;
 
-	void operator=(const ZEPlayerHandle &other) { m_Index = other.m_Index; }
-	void operator=(ZEPlayer *pZEPlayer) { Set(pZEPlayer); }
-	void Set(ZEPlayer *pZEPlayer);
-	
-	ZEPlayer *Get() const;
+	void operator=(const ZEPlayerHandle& other) { m_Index = other.m_Index; }
+	void operator=(ZEPlayer* pZEPlayer) { Set(pZEPlayer); }
+	void Set(ZEPlayer* pZEPlayer);
+
+	ZEPlayer* Get() const;
 
 private:
 	union
@@ -140,8 +142,11 @@ private:
 class ZEPlayer
 {
 public:
-	ZEPlayer(CPlayerSlot slot, bool m_bFakeClient = false): m_slot(slot), m_bFakeClient(m_bFakeClient), m_Handle(slot)
-	{ 
+	ZEPlayer(CPlayerSlot slot, bool m_bFakeClient = false) :
+		m_slot(slot),
+		m_bFakeClient(m_bFakeClient),
+		m_Handle(slot)
+	{
 		m_bAuthenticated = false;
 		m_iAdminFlags = 0;
 		m_iAdminImmunity = 0;
@@ -175,7 +180,7 @@ public:
 
 	~ZEPlayer()
 	{
-		CBarnLight *pFlashLight = m_hFlashLight.Get();
+		CBarnLight* pFlashLight = m_hFlashLight.Get();
 
 		if (pFlashLight)
 			pFlashLight->Remove();
@@ -190,7 +195,7 @@ public:
 	const CSteamID* GetSteamId() { return m_SteamID; }
 	bool IsAdminFlagSet(uint64 iFlag);
 	bool IsFlooding();
-	
+
 	void SetConnected() { m_bConnected = true; }
 	void SetUnauthenticatedSteamId(const CSteamID* steamID) { m_UnauthenticatedSteamID = steamID; }
 	void SetSteamId(const CSteamID* steamID) { m_SteamID = steamID; }
@@ -214,13 +219,13 @@ public:
 	void SetInGame(bool bInGame) { m_bInGame = bInGame; }
 	void SetImmunity(int iMZImmunity) { m_iMZImmunity = iMZImmunity; }
 	void SetNominateTime(float flCurtime) { m_flNominateTime = flCurtime; }
-	void SetFlashLight(CBarnLight *pLight) { m_hFlashLight.Set(pLight); }
-	void SetBeaconParticle(CParticleSystem *pParticle) { m_hBeaconParticle.Set(pParticle); }
+	void SetFlashLight(CBarnLight* pLight) { m_hFlashLight.Set(pLight); }
+	void SetBeaconParticle(CParticleSystem* pParticle) { m_hBeaconParticle.Set(pParticle); }
 	void SetPlayerState(uint32 iPlayerState) { m_iPlayerState = iPlayerState; }
 	void SetLeader(int leaderIndex);
 	void SetLeaderTracer(int tracerIndex) { m_iLeaderTracerIndex = tracerIndex; }
 	void SetLeaderVoteTime(float flCurtime) { m_flLeaderVoteTime = flCurtime; }
-	void SetGlowModel(CBaseModelEntity *pModel) { m_hGlowModel.Set(pModel); }
+	void SetGlowModel(CBaseModelEntity* pModel) { m_hGlowModel.Set(pModel); }
 	void SetSpeedMod(float flSpeedMod) { m_flSpeedMod = flSpeedMod; }
 	void SetLastInputs(uint64 iLastInputs) { m_iLastInputs = iLastInputs; }
 	void UpdateLastInputTime() { m_iLastInputTime = std::time(0); }
@@ -246,22 +251,22 @@ public:
 	bool IsInGame() { return m_bInGame; }
 	int GetImmunity() { return m_iMZImmunity; }
 	float GetNominateTime() { return m_flNominateTime; }
-	CBarnLight *GetFlashLight() { return m_hFlashLight.Get(); }
-	CParticleSystem *GetBeaconParticle() { return m_hBeaconParticle.Get(); }
+	CBarnLight* GetFlashLight() { return m_hFlashLight.Get(); }
+	CParticleSystem* GetBeaconParticle() { return m_hBeaconParticle.Get(); }
 	ZEPlayerHandle GetHandle() { return m_Handle; }
 	uint32 GetPlayerState() { return m_iPlayerState; }
-	bool IsLeader() { return (bool) m_iLeaderIndex; }
+	bool IsLeader() { return (bool)m_iLeaderIndex; }
 	int GetLeaderIndex() { return m_iLeaderIndex; }
 	int GetLeaderTracer() { return m_iLeaderTracerIndex; }
 	int GetLeaderVoteCount();
 	bool HasPlayerVotedLeader(ZEPlayer* pPlayer);
 	float GetLeaderVoteTime() { return m_flLeaderVoteTime; }
-	CBaseModelEntity *GetGlowModel() { return m_hGlowModel.Get(); }
+	CBaseModelEntity* GetGlowModel() { return m_hGlowModel.Get(); }
 	float GetSpeedMod() { return m_flSpeedMod; }
 	float GetMaxSpeed() { return m_flMaxSpeed; }
 	uint64 GetLastInputs() { return m_iLastInputs; }
 	std::time_t GetLastInputTime() { return m_iLastInputTime; }
-	
+
 	void OnSpawn();
 	void OnAuthenticated();
 	void CheckAdmin();
@@ -342,20 +347,20 @@ public:
 	void CheckHideDistances();
 	void SetupInfiniteAmmo();
 	CPlayerSlot GetSlotFromUserId(uint16 userid);
-	ZEPlayer *GetPlayerFromUserId(uint16 userid);
-	ZEPlayer *GetPlayerFromSteamId(uint64 steamid);
-	ETargetError GetPlayersFromString(CCSPlayerController* pPlayer, const char* pszTarget, int &iNumClients, int *clients, uint64 iBlockedFlags = NO_TARGET_BLOCKS);
-	ETargetError GetPlayersFromString(CCSPlayerController* pPlayer, const char* pszTarget, int &iNumClients, int *clients, uint64 iBlockedFlags, ETargetType& nType);
+	ZEPlayer* GetPlayerFromUserId(uint16 userid);
+	ZEPlayer* GetPlayerFromSteamId(uint64 steamid);
+	ETargetError GetPlayersFromString(CCSPlayerController* pPlayer, const char* pszTarget, int& iNumClients, int* clients, uint64 iBlockedFlags = NO_TARGET_BLOCKS);
+	ETargetError GetPlayersFromString(CCSPlayerController* pPlayer, const char* pszTarget, int& iNumClients, int* clients, uint64 iBlockedFlags, ETargetType& nType);
 	static const char* GetErrorString(ETargetError eType, int iSlot = 0);
 	bool CanTargetPlayers(CCSPlayerController* pPlayer, const char* pszTarget, int& iNumClients, int* clients, uint64 iBlockedFlags = NO_TARGET_BLOCKS);
 	bool CanTargetPlayers(CCSPlayerController* pPlayer, const char* pszTarget, int& iNumClients, int* clients, uint64 iBlockedFlags, ETargetType& nType);
 
-	ZEPlayer *GetPlayer(CPlayerSlot slot);
+	ZEPlayer* GetPlayer(CPlayerSlot slot);
 
 	uint64 GetStopSoundMask() { return m_nUsingStopSound; }
 	uint64 GetSilenceSoundMask() { return m_nUsingSilenceSound; }
 	uint64 GetStopDecalsMask() { return m_nUsingStopDecals; }
-	
+
 	void SetPlayerStopSound(int slot, bool set);
 	void SetPlayerSilenceSound(int slot, bool set);
 	void SetPlayerStopDecals(int slot, bool set);
@@ -371,13 +376,13 @@ public:
 	STEAM_GAMESERVER_CALLBACK_MANUAL(CPlayerManager, OnValidateAuthTicket, ValidateAuthTicketResponse_t, m_CallbackValidateAuthTicketResponse);
 
 private:
-	ZEPlayer *m_vecPlayers[MAXPLAYERS];
+	ZEPlayer* m_vecPlayers[MAXPLAYERS];
 
 	uint64 m_nUsingStopSound;
 	uint64 m_nUsingSilenceSound;
 	uint64 m_nUsingStopDecals;
 };
 
-extern CPlayerManager *g_playerManager;
+extern CPlayerManager* g_playerManager;
 
 void PrecacheBeaconParticle(IEntityResourceManifest* pResourceManifest);

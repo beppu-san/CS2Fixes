@@ -24,8 +24,9 @@
 
 class CPhysForce : public CBaseEntity
 {
-	DECLARE_SCHEMA_CLASS(CPhysForce)
 public:
+	DECLARE_SCHEMA_CLASS(CPhysForce)
+
 	SCHEMA_FIELD(float, m_force)
 };
 

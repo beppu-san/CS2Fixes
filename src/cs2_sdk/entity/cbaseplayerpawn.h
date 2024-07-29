@@ -28,7 +28,7 @@ extern bool g_bDropMapWeapons;
 class CBasePlayerPawn : public CBaseModelEntity
 {
 public:
-	DECLARE_SCHEMA_CLASS(CBasePlayerPawn);
+	DECLARE_SCHEMA_CLASS(CBasePlayerPawn)
 
 	SCHEMA_FIELD(CPlayer_MovementServices*, m_pMovementServices)
 	SCHEMA_FIELD(CCSPlayer_WeaponServices*, m_pWeaponServices)
@@ -68,5 +68,5 @@ public:
 		CALL_VIRTUAL(void, offset, this, bExplode, bForce);
 	}
 
-	CBasePlayerController *GetController() { return m_hController.Get(); }
+	CBasePlayerController* GetController() { return m_hController.Get(); }
 };

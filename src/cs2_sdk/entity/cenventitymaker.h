@@ -27,7 +27,7 @@
 class CEnvEntityMaker : public CBaseEntity
 {
 public:
-	DECLARE_SCHEMA_CLASS(CEnvEntityMaker);
+	DECLARE_SCHEMA_CLASS(CEnvEntityMaker)
 
 	SCHEMA_FIELD(CUtlSymbolLarge, m_iszTemplate)
 };

@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include "platform.h"
 #include "utlvector.h"
 #include "playermanager.h"
@@ -67,7 +68,8 @@ enum GrammarTense
 class CInfractionBase
 {
 public:
-	CInfractionBase(time_t duration, uint64 steamId, bool bEndTime = false) : m_iSteamID(steamId)
+	CInfractionBase(time_t duration, uint64 steamId, bool bEndTime = false) :
+		m_iSteamID(steamId)
 	{
 		// The duration is in minutes here
 		if (!bEndTime)
@@ -75,6 +77,7 @@ public:
 		else
 			m_iTimestamp = duration;
 	}
+
 	enum EInfractionType
 	{
 		Ban,
@@ -84,7 +87,7 @@ public:
 
 	virtual EInfractionType GetType() = 0;
 	virtual void ApplyInfraction(ZEPlayer*) = 0;
-	virtual void UndoInfraction(ZEPlayer *) = 0;
+	virtual void UndoInfraction(ZEPlayer*) = 0;
 	time_t GetTimestamp() { return m_iTimestamp; }
 	uint64 GetSteamId64() { return m_iSteamID; }
 
@@ -97,22 +100,22 @@ class CBanInfraction : public CInfractionBase
 {
 public:
 	using CInfractionBase::CInfractionBase;
-	
+
 	EInfractionType GetType() override { return Ban; }
 	void ApplyInfraction(ZEPlayer*) override;
 
 	// This isn't needed as we'll just not kick the player when checking infractions upon joining
-	void UndoInfraction(ZEPlayer *) override {}
+	void UndoInfraction(ZEPlayer*) override {}
 };
 
 class CMuteInfraction :public CInfractionBase
 {
 public:
 	using CInfractionBase::CInfractionBase;
-	
+
 	EInfractionType GetType() override { return Mute; }
 	void ApplyInfraction(ZEPlayer*) override;
-	void UndoInfraction(ZEPlayer *) override;
+	void UndoInfraction(ZEPlayer*) override;
 };
 
 class CGagInfraction : public CInfractionBase
@@ -121,16 +124,18 @@ public:
 	using CInfractionBase::CInfractionBase;
 
 	EInfractionType GetType() override { return Gag; }
-	void ApplyInfraction(ZEPlayer *) override;
-	void UndoInfraction(ZEPlayer *) override;
+	void ApplyInfraction(ZEPlayer*) override;
+	void UndoInfraction(ZEPlayer*) override;
 };
 
 class CAdmin
 {
 public:
-	CAdmin(const char* pszName, uint64 iSteamID, uint64 iFlags, int iAdminImmunity) : 
-		m_pszName(pszName), m_iSteamID(iSteamID), m_iFlags(iFlags), m_iAdminImmunity(iAdminImmunity)
-	{}
+	CAdmin(const char* pszName, uint64 iSteamID, uint64 iFlags, int iAdminImmunity) :
+		m_pszName(pszName),
+		m_iSteamID(iSteamID),
+		m_iFlags(iFlags),
+		m_iAdminImmunity(iAdminImmunity) {}
 
 	const char* GetName() { return m_pszName; }
 	uint64 GetSteamID() { return m_iSteamID; }
@@ -148,14 +153,15 @@ class CAdminSystem
 {
 public:
 	CAdminSystem();
+
 	bool LoadAdmins();
 	bool LoadInfractions();
 	void AddInfraction(CInfractionBase*);
 	void SaveInfractions();
-	bool ApplyInfractions(ZEPlayer *player);
-	bool FindAndRemoveInfraction(ZEPlayer *player, CInfractionBase::EInfractionType type);
+	bool ApplyInfractions(ZEPlayer* player);
+	bool FindAndRemoveInfraction(ZEPlayer* player, CInfractionBase::EInfractionType type);
 	bool FindAndRemoveInfractionSteamId64(uint64 steamid64, CInfractionBase::EInfractionType type);
-	CAdmin *FindAdmin(uint64 iSteamID);
+	CAdmin* FindAdmin(uint64 iSteamID);
 	uint64 ParseFlags(const char* pszFlags);
 	void AddDisconnectedPlayer(const char* pszName, uint64 xuid, const char* pszIP);
 	void ShowDisconnectedPlayers(CCSPlayerController* const pAdmin);
@@ -163,13 +169,13 @@ public:
 private:
 	CUtlVector<CAdmin> m_vecAdmins;
 	CUtlVector<CInfractionBase*> m_vecInfractions;
-	
+
 	// Implemented as a circular buffer.
 	std::tuple<std::string, uint64, std::string> m_rgDCPly[20];
 	int m_iDCPlyIndex;
 };
 
-extern CAdminSystem *g_pAdminSystem;
+extern CAdminSystem* g_pAdminSystem;
 
 // Given a formatted time entered by an admin, return the minutes
 int ParseTimeInput(std::string strTime);

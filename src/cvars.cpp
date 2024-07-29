@@ -24,7 +24,7 @@
 
 static uint64 g_iFlagsToRemove = (FCVAR_HIDDEN | FCVAR_DEVELOPMENTONLY | FCVAR_MISSING0 | FCVAR_MISSING1 | FCVAR_MISSING2 | FCVAR_MISSING3);
 
-static constexpr const char *pUnCheatCvars[] = { "bot_stop", "bot_freeze", "bot_zombie" };
+static constexpr const char* pUnCheatCvars[] = { "bot_stop", "bot_freeze", "bot_zombie" };
 
 void UnlockConVars()
 {
@@ -33,7 +33,7 @@ void UnlockConVars()
 
 	int iUnhiddenConVars = 0;
 
-	ConVar *pCvar = nullptr;
+	ConVar* pCvar = nullptr;
 	ConVarHandle hCvarHandle;
 	hCvarHandle.Set(0);
 
@@ -46,7 +46,7 @@ void UnlockConVars()
 
 		if (!pCvar)
 			continue;
-		
+
 		for (int i = 0; i < sizeof(pUnCheatCvars) / sizeof(*pUnCheatCvars); i++)
 		{
 			if (!V_strcmp(pCvar->m_pszName, pUnCheatCvars[i]))
@@ -70,8 +70,8 @@ void UnlockConCommands()
 
 	int iUnhiddenConCommands = 0;
 
-	ConCommand *pConCommand = nullptr;
-	ConCommand *pInvalidCommand = g_pCVar->GetCommand(ConCommandHandle());
+	ConCommand* pConCommand = nullptr;
+	ConCommand* pInvalidCommand = g_pCVar->GetCommand(ConCommandHandle());
 	ConCommandHandle hConCommandHandle;
 	hConCommandHandle.Set(0);
 
@@ -93,7 +93,7 @@ void UnlockConCommands()
 
 CON_COMMAND_F(c_dump_cvars, "dump all cvars", FCVAR_SPONLY | FCVAR_LINKED_CONCOMMAND)
 {
-	ConVar *pCvar = nullptr;
+	ConVar* pCvar = nullptr;
 	ConVarHandle hCvarHandle;
 	hCvarHandle.Set(0);
 
@@ -129,13 +129,13 @@ CON_COMMAND_F(c_dump_cvars, "dump all cvars", FCVAR_SPONLY | FCVAR_LINKED_CONCOM
 				Message("%s : uint64 : %lli\n", pCvar->m_pszName, (uint64)pCvar->values);
 				break;
 			case EConVarType_Float32:
-				Message("%s : float32 : %.2f\n", pCvar->m_pszName, *(float32 *)&pCvar->values);
+				Message("%s : float32 : %.2f\n", pCvar->m_pszName, *(float32*)&pCvar->values);
 				break;
 			case EConVarType_Float64:
-				Message("%s : float64 : %.2f\n", pCvar->m_pszName, *(float64 *)&pCvar->values);
+				Message("%s : float64 : %.2f\n", pCvar->m_pszName, *(float64*)&pCvar->values);
 				break;
 			case EConVarType_String:
-				Message("%s : string : %s\n", pCvar->m_pszName, (char *)pCvar->values);
+				Message("%s : string : %s\n", pCvar->m_pszName, (char*)pCvar->values);
 				break;
 
 			case EConVarType_Color:
@@ -161,7 +161,7 @@ CON_COMMAND_F(c_dump_cvars, "dump all cvars", FCVAR_SPONLY | FCVAR_LINKED_CONCOM
 				V_memcpy(&vec4, &pCvar->values, sizeof(vec4));
 				Message("%s : vector4 : %.2f %.2f %.2f %.2f\n", pCvar->m_pszName, vec4[0], vec4[1], vec4[2], vec4[3]);
 				break;
-			
+
 			case EConVarType_Qangle:
 				float angle[3];
 				V_memcpy(&vec3, &pCvar->values, sizeof(angle));
@@ -171,8 +171,7 @@ CON_COMMAND_F(c_dump_cvars, "dump all cvars", FCVAR_SPONLY | FCVAR_LINKED_CONCOM
 			default:
 				Message("%s : unknown type : %p\n", pCvar->m_pszName, (void*)pCvar->values);
 				break;
-			};
+			}
 		}
-
 	} while (pCvar);
 }

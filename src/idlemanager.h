@@ -29,8 +29,9 @@ public:
 	void UpdateIdleTimes();
 	void PauseIdleChecks() { m_bPaused = true; }
 	void Reset();
+
 private:
 	bool m_bPaused = false;
 };
 
-extern CIdleSystem *g_pIdleSystem;
+extern CIdleSystem* g_pIdleSystem;

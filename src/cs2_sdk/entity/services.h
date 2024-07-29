@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include <platform.h>
 #include "globaltypes.h"
 #include <entity/ccsweaponbase.h>
@@ -41,7 +42,7 @@ struct CSMatchStats_t : public CSPerRoundStats_t
 public:
 	DECLARE_SCHEMA_CLASS_INLINE(CSMatchStats_t)
 
-	SCHEMA_FIELD(int32_t, m_iEntryWins);
+	SCHEMA_FIELD(int32_t, m_iEntryWins)
 };
 
 class CCSPlayerController_ActionTrackingServices
@@ -55,17 +56,17 @@ public:
 class CPlayerPawnComponent
 {
 public:
-	DECLARE_SCHEMA_CLASS(CPlayerPawnComponent);
+	DECLARE_SCHEMA_CLASS(CPlayerPawnComponent)
 
 	SCHEMA_FIELD(CCSPlayerPawn*, __m_pChainEntity)
 
-	CCSPlayerPawn *GetPawn() { return __m_pChainEntity; }
+	CCSPlayerPawn* GetPawn() { return __m_pChainEntity; }
 };
 
 class CPlayer_MovementServices : public CPlayerPawnComponent
 {
 public:
-	DECLARE_SCHEMA_CLASS(CPlayer_MovementServices);
+	DECLARE_SCHEMA_CLASS(CPlayer_MovementServices)
 
 	SCHEMA_FIELD(CInButtonState, m_nButtons)
 	SCHEMA_FIELD(uint64_t, m_nQueuedButtonDownMask)
@@ -82,7 +83,7 @@ public:
 class CPlayer_MovementServices_Humanoid : public CPlayer_MovementServices
 {
 public:
-	DECLARE_SCHEMA_CLASS(CPlayer_MovementServices_Humanoid);
+	DECLARE_SCHEMA_CLASS(CPlayer_MovementServices_Humanoid)
 
 	SCHEMA_FIELD(float, m_flFallVelocity)
 	SCHEMA_FIELD(float, m_bInCrouch)
@@ -94,7 +95,7 @@ public:
 class CCSPlayer_MovementServices : public CPlayer_MovementServices_Humanoid
 {
 public:
-	DECLARE_SCHEMA_CLASS(CCSPlayer_MovementServices);
+	DECLARE_SCHEMA_CLASS(CCSPlayer_MovementServices)
 
 	SCHEMA_FIELD(float, m_flMaxFallVelocity)
 	SCHEMA_FIELD(float, m_flJumpVel)
@@ -106,7 +107,7 @@ public:
 class CPlayer_WeaponServices : public CPlayerPawnComponent
 {
 public:
-	DECLARE_SCHEMA_CLASS(CPlayer_WeaponServices);
+	DECLARE_SCHEMA_CLASS(CPlayer_WeaponServices)
 
 	SCHEMA_FIELD_POINTER(CUtlVector<CHandle<CBasePlayerWeapon>>, m_hMyWeapons)
 	SCHEMA_FIELD(CHandle<CBasePlayerWeapon>, m_hActiveWeapon)
@@ -115,7 +116,7 @@ public:
 class CCSPlayer_WeaponServices : public CPlayer_WeaponServices
 {
 public:
-	DECLARE_SCHEMA_CLASS(CCSPlayer_WeaponServices);
+	DECLARE_SCHEMA_CLASS(CCSPlayer_WeaponServices)
 
 	SCHEMA_FIELD(GameTime_t, m_flNextAttack)
 	SCHEMA_FIELD(bool, m_bIsLookingAtWeapon)
@@ -140,17 +141,18 @@ public:
 class CCSPlayerController_InGameMoneyServices
 {
 public:
-	DECLARE_SCHEMA_CLASS(CCSPlayerController_InGameMoneyServices);
+	DECLARE_SCHEMA_CLASS(CCSPlayerController_InGameMoneyServices)
 
-    SCHEMA_FIELD(int, m_iAccount)
+	SCHEMA_FIELD(int, m_iAccount)
 };
 
 class CCSPlayer_ItemServices
 {
 public:
-	DECLARE_SCHEMA_CLASS(CCSPlayer_ItemServices);
-	
+	DECLARE_SCHEMA_CLASS(CCSPlayer_ItemServices)
+
 	virtual ~CCSPlayer_ItemServices() = 0;
+
 private:
 	virtual void unk_01() = 0;
 	virtual void unk_02() = 0;
@@ -167,12 +169,13 @@ private:
 	virtual void unk_13() = 0;
 	virtual void unk_14() = 0;
 	virtual CBaseEntity* _GiveNamedItem(const char* pchName) = 0;
+
 public:
-    virtual bool         GiveNamedItemBool(const char* pchName)      = 0;
-    virtual CBaseEntity* GiveNamedItem(const char* pchName)          = 0;
+	virtual bool         GiveNamedItemBool(const char* pchName) = 0;
+	virtual CBaseEntity* GiveNamedItem(const char* pchName) = 0;
 	// Recommended to use CCSPlayer_WeaponServices::DropWeapon instead (parameter is ignored here)
-    virtual void         DropActiveWeapon(CBasePlayerWeapon* pWeapon) = 0;
-    virtual void         StripPlayerWeapons(bool removeSuit) = 0;
+	virtual void         DropActiveWeapon(CBasePlayerWeapon* pWeapon) = 0;
+	virtual void         StripPlayerWeapons(bool removeSuit) = 0;
 };
 
 // We need an exactly sized class to be able to iterate the vector, our schema system implementation can't do this
@@ -185,9 +188,11 @@ private:
 	uint64_t unk3 = 0; // 0x18
 	uint64_t unk4 = 0; // 0x20
 	uint64_t unk5 = -1; // 0x28
+
 public:
 	uint16_t m_nItemDefIndex; // 0x30	
 	uint16_t m_nCount; // 0x32
+
 private:
 	uint32_t unk6 = 0;
 };

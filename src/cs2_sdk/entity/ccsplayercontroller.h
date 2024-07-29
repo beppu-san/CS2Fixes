@@ -29,7 +29,7 @@ extern CGameEntitySystem* g_pEntitySystem;
 class CCSPlayerController : public CBasePlayerController
 {
 public:
-	DECLARE_SCHEMA_CLASS(CCSPlayerController);
+	DECLARE_SCHEMA_CLASS(CCSPlayerController)
 
 	SCHEMA_FIELD(CCSPlayerController_InGameMoneyServices*, m_pInGameMoneyServices)
 	SCHEMA_FIELD(CCSPlayerController_ActionTrackingServices*, m_pActionTrackingServices)
@@ -50,36 +50,14 @@ public:
 	SCHEMA_FIELD(int32_t, m_iMVPs)
 	SCHEMA_FIELD(float, m_flSmoothedPing)
 
-	static CCSPlayerController* FromPawn(CCSPlayerPawn* pawn)
-	{
-		return (CCSPlayerController*)pawn->m_hController().Get();
-	}
-
-	static CCSPlayerController* FromSlot(CPlayerSlot slot)
-	{
-		return (CCSPlayerController*)g_pEntitySystem->GetEntityInstance(CEntityIndex(slot.Get() + 1));
-	}
+	static CCSPlayerController* FromPawn(CCSPlayerPawn* pawn) { return (CCSPlayerController*)pawn->m_hController().Get(); }
+	static CCSPlayerController* FromSlot(CPlayerSlot slot) { return (CCSPlayerController*)g_pEntitySystem->GetEntityInstance(CEntityIndex(slot.Get() + 1)); }
 
 	// Returns the actual player pawn
-	CCSPlayerPawn *GetPlayerPawn()
-	{
-		return m_hPlayerPawn().Get();
-	}
-
-	ZEPlayer* GetZEPlayer()
-	{
-		return g_playerManager->GetPlayer(GetPlayerSlot());
-	}
-
-	CServerSideClient *GetServerSideClient()
-	{
-		return GetClientBySlot(GetPlayerSlot());
-	}
-
-	bool IsBot()
-	{
-		return m_fFlags() & FL_CONTROLLER_FAKECLIENT;
-	}
+	CCSPlayerPawn* GetPlayerPawn() { return m_hPlayerPawn().Get(); }
+	ZEPlayer* GetZEPlayer() { return g_playerManager->GetPlayer(GetPlayerSlot()); }
+	CServerSideClient* GetServerSideClient() { return GetClientBySlot(GetPlayerSlot()); }
+	bool IsBot() { return m_fFlags() & FL_CONTROLLER_FAKECLIENT; }
 
 	void ChangeTeam(int iTeam)
 	{
@@ -93,18 +71,14 @@ public:
 			return;
 
 		if (iTeam == CS_TEAM_SPECTATOR)
-		{
 			ChangeTeam(iTeam);
-		}
 		else
-		{
 			addresses::CCSPlayerController_SwitchTeam(this, iTeam);
-		}
 	}
 
 	void Respawn()
 	{
-		CCSPlayerPawn *pPawn = GetPlayerPawn();
+		CCSPlayerPawn* pPawn = GetPlayerPawn();
 		if (!pPawn || pPawn->IsAlive())
 			return;
 
@@ -116,7 +90,7 @@ public:
 	CSPlayerState GetPawnState()
 	{
 		// All CS2 pawns are derived from this
-		CCSPlayerPawnBase *pPawn = (CCSPlayerPawnBase*)GetPawn();
+		CCSPlayerPawnBase* pPawn = (CCSPlayerPawnBase*)GetPawn();
 
 		// The player is still joining so their pawn doesn't exist yet, and STATE_WELCOME is what they start with
 		if (!pPawn)
@@ -127,7 +101,7 @@ public:
 
 	CSPlayerState GetPlayerPawnState()
 	{
-		CCSPlayerPawn *pPawn = GetPlayerPawn();
+		CCSPlayerPawn* pPawn = GetPlayerPawn();
 
 		// The player is still joining so their pawn doesn't exist yet, and STATE_WELCOME is what they start with
 		if (!pPawn)
@@ -136,7 +110,7 @@ public:
 		return pPawn->m_iPlayerState();
 	}
 
-	CBaseEntity *GetObserverTarget()
+	CBaseEntity* GetObserverTarget()
 	{
 		auto pPawn = GetPawn();
 

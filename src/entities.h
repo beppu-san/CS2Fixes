@@ -26,16 +26,16 @@ class CGameUI;
 
 namespace CGamePlayerEquipHandler
 {
-void Use(CGamePlayerEquip* pEntity, InputData_t* pInput);
-void TriggerForAllPlayers(CGamePlayerEquip* pEntity, InputData_t* pInput);
-bool TriggerForActivatedPlayer(CGamePlayerEquip* pEntity, InputData_t* pInput);
+	void Use(CGamePlayerEquip* pEntity, InputData_t* pInput);
+	void TriggerForAllPlayers(CGamePlayerEquip* pEntity, InputData_t* pInput);
+	bool TriggerForActivatedPlayer(CGamePlayerEquip* pEntity, InputData_t* pInput);
 } // namespace CGamePlayerEquipHandler
 
 namespace CGameUIHandler
 {
-bool OnActivate(CGameUI* pEntity, CBaseEntity* pActivator);
-bool OnDeactivate(CGameUI* pEntity, CBaseEntity* pActivator);
-void RunThink(int tick);
+	bool OnActivate(CGameUI* pEntity, CBaseEntity* pActivator);
+	bool OnDeactivate(CGameUI* pEntity, CBaseEntity* pActivator);
+	void RunThink(int tick);
 } // namespace CGameUIHandler
 
 void EntityHandler_OnGameFramePre(bool simulate, int tick);

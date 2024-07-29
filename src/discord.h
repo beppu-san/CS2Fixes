@@ -31,9 +31,9 @@ public:
 		m_bOverrideName = bOverrideName;
 	}
 
-	const char* GetName() { return (const char*)m_pszName; };
-	const char* GetWebhookUrl() { return m_pszWebhookUrl; };
-	const char* GetAvatarUrl() { return m_pszAvatarUrl; };
+	const char* GetName() { return (const char*)m_pszName; }
+	const char* GetWebhookUrl() { return m_pszWebhookUrl; }
+	const char* GetAvatarUrl() { return m_pszAvatarUrl; }
 	void PostMessage(const char* sMessage);
 
 private:
