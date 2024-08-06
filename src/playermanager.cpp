@@ -31,7 +31,6 @@
 #include "recipientfilters.h"
 #include "ctimer.h"
 #include "ctime"
-#include "leader.h"
 #include "tier0/vprof.h"
 #include "networksystem/inetworkmessages.h"
 
@@ -292,13 +291,8 @@ void ZEPlayer::StartBeacon(Color color, ZEPlayerHandle hGiver/* = 0*/)
 	CHandle<CParticleSystem> hParticle = particle->GetHandle();
 	ZEPlayerHandle hPlayer = m_Handle;
 	int iTeamNum = pPlayer->m_iTeamNum;
-	bool bLeaderBeacon = false;
 
-	ZEPlayer* pGiver = hGiver.Get();
-	if (pGiver && pGiver->IsLeader())
-		bLeaderBeacon = true;
-
-	new CTimer(1.0f, false, false, [hPlayer, hParticle, hGiver, iTeamNum, bLeaderBeacon]()
+	new CTimer(1.0f, false, false, [hPlayer, hParticle, hGiver, iTeamNum]()
 		{
 			CParticleSystem* pParticle = hParticle.Get();
 
@@ -313,21 +307,11 @@ void ZEPlayer::StartBeacon(Color color, ZEPlayerHandle hGiver/* = 0*/)
 				return -1.0f;
 			}
 
-			if (!bLeaderBeacon)
-				return 1.0f;
-
 			ZEPlayer* pBeaconGiver = hGiver.Get();
 
-			// Continue beacon, leader is not on the server. No reason to remove the beacon
+			// Continue beacon, no reason to remove the beacon
 			if (!pBeaconGiver)
 				return 1.0f;
-
-			// Remove beacon granted by leader if his leader was stripped
-			if (!pBeaconGiver->IsLeader())
-			{
-				addresses::UTIL_Remove(pParticle);
-				return -1.0f;
-			}
 
 			return 1.0f;
 		});
@@ -339,53 +323,6 @@ void ZEPlayer::EndBeacon()
 
 	if (pParticle)
 		addresses::UTIL_Remove(pParticle);
-}
-
-void ZEPlayer::SetLeader(int leaderIndex)
-{
-	if (leaderIndex >= g_nLeaderColorMapSize)
-	{
-		m_iLeaderIndex = g_iLeaderIndex = 1;
-		return;
-	}
-
-	m_iLeaderIndex = leaderIndex;
-}
-
-int ZEPlayer::GetLeaderVoteCount()
-{
-	int iValidVoteCount = 0;
-
-	for (int i = m_vecLeaderVotes.Count() - 1; i >= 0; i--)
-	{
-		if (m_vecLeaderVotes[i].IsValid())
-			iValidVoteCount++;
-		else
-			m_vecLeaderVotes.Remove(i);
-	}
-
-	return iValidVoteCount;
-}
-
-bool ZEPlayer::HasPlayerVotedLeader(ZEPlayer* pPlayer)
-{
-	FOR_EACH_VEC(m_vecLeaderVotes, i)
-	{
-		if (m_vecLeaderVotes[i] == pPlayer)
-			return true;
-	}
-
-	return false;
-}
-
-void ZEPlayer::AddLeaderVote(ZEPlayer* pPlayer)
-{
-	m_vecLeaderVotes.AddToTail(pPlayer->GetHandle());
-}
-
-void ZEPlayer::PurgeLeaderVotes()
-{
-	m_vecLeaderVotes.Purge();
 }
 
 void ZEPlayer::StartGlow(Color color, int duration)

@@ -27,7 +27,6 @@
 #include "entity/cgamerules.h"
 #include "zombiereborn.h"
 #include "votemanager.h"
-#include "leader.h"
 #include "recipientfilters.h"
 #include "panoramavote.h"
 
@@ -225,9 +224,6 @@ GAME_EVENT_F(round_start)
 	if (g_bEnableZR)
 		ZR_OnRoundStart(pEvent);
 
-	if (g_bEnableLeader)
-		Leader_OnRoundStart(pEvent);
-
 	// Dumb workaround for CS2 always overriding sv_full_alltalk on state changes
 	if (g_bFullAllTalk)
 		g_pEngineServer2->ServerCommand("sv_full_alltalk 1");
@@ -330,8 +326,7 @@ GAME_EVENT_F(round_time_warning)
 
 GAME_EVENT_F(bullet_impact)
 {
-	if (g_bEnableLeader)
-		Leader_BulletImpact(pEvent);
+	//
 }
 
 GAME_EVENT_F(vote_cast)

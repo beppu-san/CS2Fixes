@@ -36,7 +36,6 @@
 #include "user_preferences.h"
 #include "customio.h"
 #include <sstream>
-#include "leader.h"
 #include "tier0/vprof.h"
 #include <fstream>
 #include "vendor/nlohmann/json.hpp"
@@ -676,24 +675,6 @@ void CZRPlayerClassManager::ApplyHumanClass(ZRHumanClass *pClass, CCSPlayerPawn 
 	CCSPlayerController *pController = CCSPlayerController::FromPawn(pPawn);
 	if (pController)
 		CZRRegenTimer::StopRegen(pController);
-	
-	if (!g_bEnableLeader || !pController)
-		return;
-	
-	ZEPlayer *pPlayer = g_playerManager->GetPlayer(pController->GetPlayerSlot());
-
-	if (pPlayer && pPlayer->IsLeader())
-	{
-		CHandle<CCSPlayerPawn> hPawn = pPawn->GetHandle();
-
-		new CTimer(0.02f, false, false, [hPawn]()
-		{
-			CCSPlayerPawn *pPawn = hPawn.Get();
-			if (pPawn)
-				Leader_ApplyLeaderVisuals(pPawn);
-			return -1.0f;
-		});
-	}
 }
 
 void CZRPlayerClassManager::ApplyPreferredOrDefaultHumanClass(CCSPlayerPawn *pPawn)
