@@ -23,6 +23,7 @@
 #include "utils/module.h"
 #include "utlstring.h"
 #include "variant.h"
+#include "eiface.h"
 
 namespace modules
 {
@@ -53,9 +54,11 @@ class CEntityKeyValues;
 class IRecipientFilter;
 class CTakeDamageInfo;
 class INetworkStringTable;
+class CTraceFilter;
 
 struct EmitSound_t;
 struct SndOpEventGuid_t;
+struct bbox_t;
 
 namespace addresses
 {
@@ -91,4 +94,6 @@ namespace addresses
 	inline void(FASTCALL *CTakeDamageInfo_Constructor)(CTakeDamageInfo *pThis, CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBaseEntity *pAbility,
 		const Vector *vecDamageForce, const Vector *vecDamagePosition, float flDamage, int bitsDamageType, int iCustomDamage, void *a10);
 	inline void(FASTCALL *CNetworkStringTable_DeleteAllStrings)(INetworkStringTable *pThis);
+
+	inline void(FASTCALL* TracePlayerBBox)(const Vector& vecStart, const Vector& vecEnd, const bbox_t& nBounds, CTraceFilter* pFilter, trace_t& nTrace);
 }

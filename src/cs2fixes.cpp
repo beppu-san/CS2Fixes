@@ -349,7 +349,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool
 
 bool CS2Fixes::Unload(char *error, size_t maxlen)
 {
-    SH_REMOVE_HOOK(IServerGameDLL, GameFrame, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameFramePost), true);
+	SH_REMOVE_HOOK(IServerGameDLL, GameFrame, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameFramePost), true);
 	SH_REMOVE_HOOK(IServerGameDLL, GameServerSteamAPIActivated, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameServerSteamAPIActivated), false);
 	SH_REMOVE_HOOK(IServerGameDLL, GameServerSteamAPIDeactivated, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_GameServerSteamAPIDeactivated), false);
 	SH_REMOVE_HOOK(IServerGameDLL, ApplyGameSettings, g_pSource2Server, SH_MEMBER(this, &CS2Fixes::Hook_ApplyGameSettings), false);
@@ -808,7 +808,7 @@ void CS2Fixes::Hook_GameFramePost(bool simulating, bool bFirstTick, bool bLastTi
 	if (g_bEnableZR)
 		CZRRegenTimer::Tick();
 
-    EntityHandler_OnGameFramePost(simulating, gpGlobals->tickcount);
+	EntityHandler_OnGameFramePost(simulating, gpGlobals->tickcount);
 }
 
 extern bool g_bFlashLightTransmitOthers;
@@ -979,6 +979,9 @@ void CS2Fixes::OnLevelInit( char const *pMapName,
 
 	g_playerManager->SetupInfiniteAmmo();
 	g_pMapVoteSystem->OnLevelInit(pMapName);
+
+	g_vecLeaders.Purge();
+	g_vecMarkers.Purge();
 
 	if (g_bEnableZR)
 		ZR_OnLevelInit();

@@ -18,6 +18,7 @@
  */
 
 #include "leader.h"
+#include "ctimer.h"
 #include "common.h"
 #include "commands.h"
 #include "gameevents.pb.h"
@@ -26,175 +27,68 @@
 
 #include "tier0/memdbgon.h"
 
-extern IVEngineServer2 *g_pEngineServer2;
-extern CGameEntitySystem *g_pEntitySystem;
-extern CGlobalVars *gpGlobals;
-extern IGameEventManager2 *g_gameEventManager;
+extern IVEngineServer2* g_pEngineServer2;
+extern CGameEntitySystem* g_pEntitySystem;
+extern CGlobalVars* gpGlobals;
+extern IGameEventManager2* g_gameEventManager;
 
-LeaderColor LeaderColorMap[] = {
-	{"white",		Color(255, 255, 255, 255)}, // default if color finding func doesn't match any other color
-	{"blue",		Color(40, 100, 255, 255)}, // Default CT color and first leader index
-	{"orange",		Color(185, 93, 63, 255)}, // Default T color
-	{"green",		Color(100, 230, 100, 255)},
-	{"yellow",		Color(200, 200, 0, 255)},
-	{"purple",		Color(164, 73, 255, 255)},
-	{"red",			Color(214, 39, 40, 255)}, // Last leader index
-};
-
-const size_t g_nLeaderColorMapSize = sizeof(LeaderColorMap) / sizeof(LeaderColor);
-CUtlVector<ZEPlayerHandle> g_vecLeaders;
-int g_iLeaderIndex = 0;
-
-// CONVAR_TODO
 bool g_bEnableLeader = false;
-static float g_flLeaderVoteRatio = 0.15;
-static bool g_bLeaderActionsHumanOnly = true;
+static float g_flLeaderVoteRatio = 0.15f;
 static bool g_bMutePingsIfNoLeader = true;
-static std::string g_szLeaderModelPath = "";
-static int g_iMarkerCount = 0;
 
 FAKE_BOOL_CVAR(cs2f_leader_enable, "Whether to enable Leader features", g_bEnableLeader, false, false)
-FAKE_FLOAT_CVAR(cs2f_leader_vote_ratio, "Vote ratio needed for player to become a leader", g_flLeaderVoteRatio, 0.2f, false)
-FAKE_BOOL_CVAR(cs2f_leader_actions_ct_only, "Whether to allow leader actions (like !ldbeacon) only from human team", g_bLeaderActionsHumanOnly, true, false)
+FAKE_FLOAT_CVAR(cs2f_leader_vote_ratio, "Vote ratio needed for player to become a leader", g_flLeaderVoteRatio, 0.25f, false)
 FAKE_BOOL_CVAR(cs2f_leader_mute_ping_no_leader, "Whether to mute player pings whenever there's no leader", g_bMutePingsIfNoLeader, true, false)
-FAKE_STRING_CVAR(cs2f_leader_model_path, "Path to player model to be used for leaders", g_szLeaderModelPath, false)
 
-int Leader_GetNeededLeaderVoteCount()
+CUtlVector<CLeaderMarker> g_vecMarkers;
+CUtlVector<CZRLeader> g_vecLeaders;
+
+int Leader_GetRequiredVoteCounts()
 {
-	int iOnlinePlayers = 0;
+	int iPlayers = 0;
 
 	for (int i = 0; i < gpGlobals->maxClients; i++)
 	{
 		ZEPlayer* pPlayer = g_playerManager->GetPlayer(i);
 
 		if (pPlayer && !pPlayer->IsFakeClient())
-		{
-			iOnlinePlayers++;
-		}
+			iPlayers++;
 	}
 
-	return (int)(iOnlinePlayers * g_flLeaderVoteRatio) + 1;
+	return (int)(iPlayers * g_flLeaderVoteRatio) + 1;
 }
 
-Color Leader_ColorFromString(const char* pszColorName)
+void Leader_Precache(IEntityResourceManifest* pResourceManifest)
 {
-	int iColorIndex = V_StringToInt32(pszColorName, -1);
-
-	if (iColorIndex > -1)
-		return LeaderColorMap[MIN(iColorIndex, g_nLeaderColorMapSize-1)].clColor;
-
-	for (int i = 0; i < g_nLeaderColorMapSize; i++)
-	{
-		if (!V_stricmp(pszColorName, LeaderColorMap[i].pszColorName))
-		{
-			return LeaderColorMap[i].clColor;
-		}
-	}
-
-	return LeaderColorMap[0].clColor;
+	pResourceManifest->AddResource("models/leader_model/marker.vmdl");
 }
 
-bool Leader_NoLeaders()
-{
-	int iValidLeaders = 0;
-	FOR_EACH_VEC_BACK(g_vecLeaders, i)
-	{
-		if (g_vecLeaders[i].IsValid())
-			iValidLeaders++;
-		else
-			g_vecLeaders.Remove(i);
-	}
-
-	return !((bool)iValidLeaders);
-}
-
-void Leader_ApplyLeaderVisuals(CCSPlayerPawn *pPawn)
-{
-	CCSPlayerController *pController = CCSPlayerController::FromPawn(pPawn);
-	ZEPlayer *pPlayer = pController->GetZEPlayer();
-
-	if (!g_szLeaderModelPath.empty())
-	{
-		pPawn->SetModel(g_szLeaderModelPath.c_str());
-		pPawn->AcceptInput("Skin", 0);
-	}
-
-	pPawn->m_clrRender = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
-}
-
-void Leader_RemoveLeaderVisuals(CCSPlayerPawn *pPawn)
-{
-	g_pZRPlayerClassManager->ApplyPreferredOrDefaultHumanClassVisuals(pPawn);
-}
-
-bool Leader_CreateDefendMarker(ZEPlayer *pPlayer, Color clrTint, int iDuration)
-{
-	CCSPlayerController *pController = CCSPlayerController::FromSlot(pPlayer->GetPlayerSlot());
-	CCSPlayerPawn *pPawn = (CCSPlayerPawn *)pController->GetPawn();
-
-	if (g_iMarkerCount >= 5)
-	{
-		ClientPrint(pController, HUD_PRINTTALK, CHAT_PREFIX "Too many defend markers already active!");
-		return false;
-	}
-
-	g_iMarkerCount++;
-
-	new CTimer(iDuration, false, false, []()
-	{
-		if (g_iMarkerCount > 0)
-			g_iMarkerCount--;
-
-		return -1.0f;
-	});
-
-	CParticleSystem *pMarker = CreateEntityByName<CParticleSystem>("info_particle_system");
-
-	Vector vecOrigin = pPawn->GetAbsOrigin();
-	vecOrigin.z += 10;
-
-	CEntityKeyValues* pKeyValues = new CEntityKeyValues();
-
-	pKeyValues->SetString("effect_name", "particles/cs2fixes/leader_defend_mark.vpcf");
-	pKeyValues->SetInt("tint_cp", 1);
-	pKeyValues->SetColor("tint_cp_color", clrTint);
-	pKeyValues->SetVector("origin", vecOrigin);
-	pKeyValues->SetBool("start_active", true);
-
-	pMarker->DispatchSpawn(pKeyValues);
-
-	UTIL_AddEntityIOEvent(pMarker, "DestroyImmediately", nullptr, nullptr, "", iDuration);
-	UTIL_AddEntityIOEvent(pMarker, "Kill", nullptr, nullptr, "", iDuration + 0.02f);
-
-	return true;
-}
-
-void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64 *clients, const CNetMessage *pData)
+void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64* clients, const CNetMessage* pData)
 {
 	if (!g_bEnableLeader)
 		return;
 
 	auto pPBData = pData->ToPB<CMsgSource1LegacyGameEvent>();
-	
+
 	static int player_ping_id = g_gameEventManager->LookupEventId("player_ping");
 
 	if (pPBData->eventid() != player_ping_id)
 		return;
 
 	// Don't kill ping visual when there's no leader, only mute the ping depending on cvar
-	if (Leader_NoLeaders())
+	if (g_vecLeaders.Count() == 0)
 	{
 		if (g_bMutePingsIfNoLeader)
-			*(uint64 *)clients = 0;
+			*(uint64*)clients = 0;
 
 		return;
 	}
 
-	IGameEvent *pEvent = g_gameEventManager->UnserializeEvent(*pPBData);
+	IGameEvent* pEvent = g_gameEventManager->UnserializeEvent(*pPBData);
 
-	ZEPlayer *pPlayer = g_playerManager->GetPlayer(pEvent->GetPlayerSlot("userid"));
-	CCSPlayerController *pController = CCSPlayerController::FromSlot(pEvent->GetPlayerSlot("userid"));
-	CBaseEntity *pEntity = (CBaseEntity*)g_pEntitySystem->GetEntityInstance(pEvent->GetEntityIndex("entityid"));
+	ZEPlayer* pPlayer = g_playerManager->GetPlayer(pEvent->GetPlayerSlot("userid"));
+	CCSPlayerController* pController = CCSPlayerController::FromSlot(pEvent->GetPlayerSlot("userid"));
+	CBaseEntity* pEntity = (CBaseEntity*)g_pEntitySystem->GetEntityInstance(pEvent->GetEntityIndex("entityid"));
 
 	g_gameEventManager->FreeEvent(pEvent);
 
@@ -202,7 +96,7 @@ void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64 *clients, cons
 	if (pController->m_iTeamNum == CS_TEAM_T)
 	{
 		if (g_bMutePingsIfNoLeader)
-			*(uint64 *)clients = 0;
+			*(uint64*)clients = 0;
 
 		return;
 	}
@@ -215,176 +109,410 @@ void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64 *clients, cons
 	pEntity->Remove();
 
 	// Block clients from playing the ping sound
-	*(uint64 *)clients = 0;
+	*(uint64*)clients = 0;
 }
 
-void Leader_OnRoundStart(IGameEvent *pEvent)
+void Leader_OnRoundStart(IGameEvent* pEvent)
 {
-	for (int i = 0; i < gpGlobals->maxClients; i++)
+	FOR_EACH_VEC(g_vecLeaders, i)
 	{
-		ZEPlayer *pPlayer = g_playerManager->GetPlayer((CPlayerSlot)i);
+		if (g_vecLeaders[i].GetPlayer()->GetLeaderType() == ELeaderType::TEMPORARY)
+		{
+			g_vecLeaders.Remove(i);
+			break;
+		}
 
-		if (pPlayer && !pPlayer->IsLeader())
-			pPlayer->SetLeaderTracer(0);
+		g_vecLeaders[i].RemoveAllMarkers();
 	}
-
-	g_iMarkerCount = 0;
 }
 
-// revisit this later with a TempEnt implementation
-void Leader_BulletImpact(IGameEvent *pEvent)
+CZRLeader::CZRLeader(ZEPlayer* pPlayer, ELeaderType nType) :
+	m_iButtonsPrevious(IN_NONE),
+	m_iButtons(IN_NONE),
+	m_bIgnoreAttack2Input(false),
+	m_iPaintModeQueue(20),
+	m_iMarkerIndex(0)
 {
-	ZEPlayer *pPlayer = g_playerManager->GetPlayer(pEvent->GetPlayerSlot("userid"));
+	if (!pPlayer || nType == ELeaderType::NONE)
+		return;
+
+	m_hPlayer = pPlayer->GetHandle();
+	pPlayer->SetLeader(nType);
+
+	new CTimer(0.01f, false, true, [this, pPlayer]() -> float
+		{
+			if (!pPlayer || pPlayer->GetLeaderType() == ELeaderType::NONE)
+				return -1.f;
+
+			if (!pPlayer->IsLeader())
+				return 0.01f;
+
+			CCSPlayerPawn* pPawn = (CCSPlayerPawn*)CCSPlayerController::FromSlot(pPlayer->GetPlayerSlot())->GetPawn();
+
+			if (pPlayer->IsInfected() || !pPawn->IsAlive())
+				return 0.01f;
+
+			uint64 iButtons = pPawn->m_pMovementServices()->m_nButtons().m_pButtonStates()[0];
+			m_iButtonsPrevious = m_iButtons;
+			m_iButtons = iButtons;
+
+			if (m_iButtons & IN_ATTACK2)
+			{
+				if (m_iPaintModeQueue == 0)
+				{
+					//
+				}
+				else if (!(m_iButtonsPrevious & IN_ATTACK2))
+				{
+					if (m_iButtons & IN_SPEED)
+					{
+						RemoveAllMarkers();
+						m_bIgnoreAttack2Input = true;
+					}
+					else if (m_iButtons & IN_DUCK)
+					{
+						m_bIgnoreAttack2Input = true;
+					}
+
+					if (!m_bIgnoreAttack2Input)
+						m_iPaintModeQueue = m_iPaintModeQueue > 0 ? m_iPaintModeQueue - 1 : 0;
+				}
+			}
+			else if (m_iButtonsPrevious & IN_ATTACK2)
+			{
+				if (m_iPaintModeQueue > 0 && !m_bIgnoreAttack2Input)
+					PutMarker();
+
+				m_iPaintModeQueue = 20;
+				m_bIgnoreAttack2Input = false;
+			}
+
+			return 0.01f;
+		});
+
+	g_vecLeaders.AddToTail(*this);
+
+	CCSPlayerController* pController = CCSPlayerController::FromSlot(pPlayer->GetPlayerSlot());
+
+	const std::map<ELeaderType, const char*> mapLeaderNames =
+	{
+		{ELeaderType::HEAD, "HEAD Leader"},
+		{ELeaderType::TEMPORARY, "TEMPORARY Leader"},
+		{ELeaderType::ASSISTANT, "ASSISTANT Leader"},
+	};
+
+	ClientPrintAll(HUD_PRINTTALK, LEADER_PREFIX " \x0E" "%s \3has become the \5%s\3!", pController->GetPlayerName(), mapLeaderNames.find(nType)->second);
+	ClientPrint(pController, HUD_PRINTTALK, LEADER_PREFIX " \x0EYou are currently the new %s!", mapLeaderNames.find(nType)->second);
+	ClientPrint(pController, HUD_PRINTTALK, LEADER_PREFIX " \x0E[+attack2] \3to put a marker.");
+	ClientPrint(pController, HUD_PRINTTALK, LEADER_PREFIX " \x0E[+attack2] + [+sprint] \3to clear ALL markers.");
+}
+
+CZRLeader::~CZRLeader()
+{
+	ZEPlayer* pPlayer = m_hPlayer.Get();
 
 	if (!pPlayer)
 		return;
 
-	int iTracerIndex = pPlayer->GetLeaderTracer();
+	CCSPlayerController* pController = CCSPlayerController::FromSlot(pPlayer->GetPlayerSlot());
 
-	if (!iTracerIndex)
+	pPlayer->SetLeader(ELeaderType::NONE);
+
+	ClientPrintAll(HUD_PRINTTALK, LEADER_PREFIX " \x0E" "%s \2no longer has the Leader access.", pController->GetPlayerName());
+}
+
+void CZRLeader::PutMarker()
+{
+	ZEPlayer* pPlayer = m_hPlayer.Get();
+
+	if (!pPlayer)
 		return;
 
-	CCSPlayerPawn *pPawn = (CCSPlayerPawn *)pEvent->GetPlayerPawn("userid");
-	CBasePlayerWeapon *pWeapon = pPawn->m_pWeaponServices->m_hActiveWeapon.Get();
+	if (pPlayer->GetLeaderType() == ELeaderType::ASSISTANT)
+		return;
 
-	CParticleSystem* particle = CreateEntityByName<CParticleSystem>("info_particle_system");
+	CCSPlayerController* pController = CCSPlayerController::FromSlot(pPlayer->GetPlayerSlot());
+	CCSPlayerPawn* pPawn = (CCSPlayerPawn*)pController->GetPawn();
 
-	// Teleport particle to muzzle_flash attachment of player's weapon
-	particle->AcceptInput("SetParent", "!activator", pWeapon, nullptr);
-	particle->AcceptInput("SetParentAttachment", "muzzle_flash");
+	if (pPlayer->IsInfected() || !pPawn->IsAlive())
+		return;
 
-	CEntityKeyValues* pKeyValues = new CEntityKeyValues();
-
-	// Event contains other end of the particle
-	Vector vecData = Vector(pEvent->GetFloat("x"), pEvent->GetFloat("y"), pEvent->GetFloat("z"));
-	Color clTint = LeaderColorMap[iTracerIndex].clColor;
-
-	pKeyValues->SetString("effect_name", "particles/cs2fixes/leader_tracer.vpcf");
-	pKeyValues->SetInt("data_cp", 1);
-	pKeyValues->SetVector("data_cp_value", vecData);
-	pKeyValues->SetInt("tint_cp", 2);
-	pKeyValues->SetColor("tint_cp_color", clTint);
-	pKeyValues->SetBool("start_active", true);
-
-	particle->DispatchSpawn(pKeyValues);
-
-	UTIL_AddEntityIOEvent(particle, "DestroyImmediately", nullptr, nullptr, "", 0.1f);
-	UTIL_AddEntityIOEvent(particle, "Kill", nullptr, nullptr, "", 0.12f);
-}
-
-void Leader_Precache(IEntityResourceManifest *pResourceManifest)
-{
-	if (!g_szLeaderModelPath.empty())
-		pResourceManifest->AddResource(g_szLeaderModelPath.c_str());
-	pResourceManifest->AddResource("particles/cs2fixes/leader_tracer.vpcf");
-	pResourceManifest->AddResource("particles/cs2fixes/leader_defend_mark.vpcf");
-}
-
-CON_COMMAND_CHAT(glow, "<name> [duration] - Toggle glow highlight on a player")
-{
-	ZEPlayer* pPlayer = player ? player->GetZEPlayer() : nullptr;
-	bool bIsAdmin = pPlayer ? pPlayer->IsAdminFlagSet(ADMFLAG_GENERIC) : true;
-
-	if (args.ArgC() < 2 && (bIsAdmin || (g_bEnableLeader && pPlayer->IsLeader())))
+	FOR_EACH_VEC(g_vecMarkers, i)
 	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !glow <name> [duration]");
+		if (g_vecMarkers[i].GetIndex() == m_iMarkerIndex)
+		{
+			g_vecMarkers[i].Remove();
+			break;
+		}
+	}
+
+	Vector vecOrigin;
+	QAngle angRotate;
+	CBaseEntity* pEntity = GetEntityAimed(vecOrigin, angRotate);
+
+	new CLeaderMarker(vecOrigin, angRotate, m_iMarkerIndex, pEntity);
+
+	const std::map<int, const char*> mapMarkerNames =
+	{
+		{0, " \x0F" "A\1"},
+		{1, " \4B\1"},
+		{2, " \x0C" "C\1"},
+		{3, " \x09" "D\1"},
+		{4, " \x0E" "E\1"},
+		{5, " \x0B" "F\1"},
+		{6, " \x10G\1"},
+		{7, " \3H\1"},
+	};
+
+	ClientPrintAll(HUD_PRINTTALK, " \x0E" "\xE2\x98\x85 " "%s: \3Watch out for" "%s \3Marker!", pController->GetPlayerName(), mapMarkerNames.find(m_iMarkerIndex)->second);
+
+	m_iMarkerIndex = (m_iMarkerIndex + 1) % 8;
+}
+
+void CZRLeader::RemoveAllMarkers()
+{
+	FOR_EACH_VEC(g_vecMarkers, i)
+	{
+		g_vecMarkers[i].Remove();
+		i--;
+	}
+
+	m_iMarkerIndex = 0;
+}
+
+CBaseEntity* CZRLeader::GetEntityAimed(Vector& origin, QAngle& angles, bool bIsRecursive)
+{
+	CCSPlayerPawn* pPawn = (CCSPlayerPawn*)CCSPlayerController::FromSlot(m_hPlayer.Get()->GetPlayerSlot())->GetPawn();
+
+	Vector vecStart;
+	if (bIsRecursive)
+		vecStart = origin;
+	else
+	{
+		vecStart = pPawn->GetAbsOrigin();
+		vecStart.z += 64.f;
+	}
+
+	Vector vecForward;
+	AngleVectors(pPawn->m_angEyeAngles(), &vecForward);
+	vecForward.Normalized();
+
+	Vector vecEnd = vecStart + vecForward * 65536.f;
+
+	CTraceFilter* pFilter = new CTraceFilter();
+	pFilter->m_nInteractsWith = 0x39312b;
+	pFilter->m_nInteractsExclude = 0x48804;
+	pFilter->m_nInteractsAs = 0x40000;
+	pFilter->m_nObjectSetMask = RNQUERY_OBJECTS_ALL;
+	pFilter->m_nCollisionGroup = COLLISION_GROUP_ALWAYS;
+	pFilter->m_bHitSolid = true;
+	pFilter->m_bHitSolidRequiresGenerateContacts = true;
+	pFilter->SetPassEntityOwner1(static_cast<CEntityInstance*>(pPawn));
+
+	trace_t nTrace;
+	TraceShape(vecStart, vecEnd, pFilter, nTrace);
+
+	if (nTrace.DidHit())
+	{
+		CUtlVector<CHandle<CBasePlayerWeapon>>* vecWeapons = pPawn->m_pWeaponServices() ? pPawn->m_pWeaponServices()->m_hMyWeapons() : nullptr;
+
+		CBaseEntity* pEnt = static_cast<CBaseEntity*>(nTrace.m_pEnt);
+		CGameSceneNode* pNode = pEnt->m_CBodyComponent()->m_pSceneNode()->m_pParent();
+
+		while (pNode)
+		{
+			CBaseEntity* pParented = static_cast<CBaseEntity*>(pNode->m_pOwner());
+
+			FOR_EACH_VEC(*vecWeapons, i)
+			{
+				CBasePlayerWeapon* pWeapon = (*vecWeapons)[i].Get();
+
+				if (pWeapon && pWeapon == pParented)
+				{
+					vecStart = nTrace.m_vHitPoint + vecForward * 16.f;
+					return GetEntityAimed(vecStart, angles, true);
+				}
+			}
+
+			pNode = pParented->m_CBodyComponent()->m_pSceneNode()->m_pParent();
+		}
+
+		origin = nTrace.m_vHitPoint;
+
+		VectorAngles(nTrace.m_vHitNormal, angles);
+		angles.x += 90.f;
+
+		return pEnt;
+	}
+
+	return nullptr;
+}
+
+CLeaderMarker::CLeaderMarker(const Vector& origin, const QAngle& angles, int iIndex, CBaseEntity* pParent) :
+	m_iIndex(iIndex)
+{
+	struct Marker_t
+	{
+		Color clColor;
+		const char* pszText;
+	};
+
+	const std::map<int, Marker_t> mapMarkers =
+	{
+		{0, {Color(255, 0, 0), "A"}},
+		{1, {Color(0, 255, 0), "B"}},
+		{2, {Color(0, 0, 255), "C"}},
+		{3, {Color(255, 255, 0), "D"}},
+		{4, {Color(255, 0, 255), "E"}},
+		{5, {Color(0, 255, 255), "F"}},
+		{6, {Color(255, 128, 0), "G"}},
+		{7, {Color(128, 0, 255), "H"}},
+	};
+
+	Color color = mapMarkers.find(iIndex)->second.clColor;
+
+	CBaseModelEntity* pModel = CreateEntityByName<CBaseModelEntity>("prop_dynamic_override");
+	CEntityKeyValues* pKvModel = new CEntityKeyValues();
+	pKvModel->SetString("model", "models/leader_model/marker.vmdl");
+	pKvModel->SetString("DefaultAnim", "idle");
+	pKvModel->SetInt("spawnflags", 256U);
+	pKvModel->SetInt("disablerecieveshadows", 1);
+	pKvModel->SetInt("disableshadows", 1);
+	pKvModel->SetColor("rendercolor", Color(color.r(), color.g(), color.b(), 160));
+	pKvModel->SetInt("rendermode", kRenderTransColor);
+	pKvModel->SetInt("renderfx", kRenderFxPulseSlow);
+	pKvModel->SetInt("solid", SOLID_NONE);
+	pKvModel->SetInt("skin", 0);
+	pKvModel->SetFloat("scale", 1.f);
+
+	pModel->DispatchSpawn(pKvModel);
+	pModel->Teleport(&origin, &angles, nullptr);
+
+	CPointWorldText* pSprite = CreateEntityByName<CPointWorldText>("point_worldtext");
+	CEntityKeyValues* pKvSprite = new CEntityKeyValues();
+	pKvSprite->SetString("message", mapMarkers.find(iIndex)->second.pszText);
+	pKvSprite->SetString("font_name", "Arial Black");
+	pKvSprite->SetInt("font_size", 120);
+	pKvSprite->SetColor("color", Color(color.r(), color.g(), color.b(), 255));
+	pKvSprite->SetInt("justify_horizontal", POINT_WORLD_TEXT_JUSTIFY_HORIZONTAL_CENTER);
+	pKvSprite->SetInt("justify_vertical", POINT_WORLD_TEXT_JUSTIFY_VERTICAL_CENTER);
+	pKvSprite->SetInt("reorient_mode", POINT_WORLD_TEXT_REORIENT_AROUND_UP);
+	pKvSprite->SetFloat("world_units_per_pixel", 0.25f);
+	pKvSprite->SetBool("enabled", true);
+	pKvSprite->SetBool("fullbright", true);
+
+	QAngle buf = angles - QAngle(90.f, 0.f, 0.f);
+	Vector vecForward;
+	AngleVectors(buf, &vecForward);
+
+	Vector vecOffset = origin + vecForward * 30.f;
+	buf = QAngle(0.f, 0.f, 90.f);
+
+	pSprite->DispatchSpawn(pKvSprite);
+	pSprite->Teleport(&vecOffset, &buf, nullptr);
+
+	new CTimer(0.f, false, false, [pModel, pSprite, pParent]() -> float
+		{
+			pSprite->SetParent(pModel);
+
+			if (pParent)
+				pModel->SetParent(pParent);
+
+			return -1.f;
+		});
+
+	m_hModel.Set(pModel);
+	m_hSprite.Set(pSprite);
+
+	g_vecMarkers.AddToTail(*this);
+}
+
+void CLeaderMarker::Remove()
+{
+	CBaseModelEntity* pModel = m_hModel.Get();
+	if (pModel)
+		UTIL_AddEntityIOEvent(pModel, "Kill", nullptr, nullptr, 0.f);
+
+	CPointWorldText* pSprite = m_hSprite.Get();
+	if (pSprite)
+		UTIL_AddEntityIOEvent(pModel, "Kill", nullptr, nullptr, 0.f);
+
+	FOR_EACH_VEC(g_vecMarkers, i)
+	{
+		if (g_vecMarkers[i] == *this)
+		{
+			g_vecMarkers.Remove(i);
+			break;
+		}
+	}
+}
+
+CON_COMMAND_CHAT_FLAGS(setleader, "<name> - Force a player to become a new HEAD Leader", ADMFLAG_BAN)
+{
+	if (args.ArgC() < 2)
+	{
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !setleader <name>");
 		return;
 	}
 
-	Color color;
-	int iDuration = 0;
-	if (args.ArgC() == 3)
-		iDuration = V_StringToInt32(args[2], 0);
+	FOR_EACH_VEC(g_vecLeaders, i)
+	{
+		if (g_vecLeaders[i].GetPlayer()->GetLeaderType() == ELeaderType::HEAD)
+		{
+			ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "Head Leader has been already existed!");
+			return;
+		}
+	}
 
 	int iNumClients = 0;
 	int pSlots[MAXPLAYERS];
-	ETargetType nType;
 
-	if (bIsAdmin) // Admin command logic
-	{
-		if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_DEAD, nType))
-			return;
-
-		const char* pszCommandPlayerName = player ? player->GetPlayerName() : CONSOLE_NAME;
-
-		for (int i = 0; i < iNumClients; i++)
-		{
-			CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[i]);
-
-			if (pTarget->m_iTeamNum < CS_TEAM_T)
-				continue;
-
-			// Exception - Use LeaderIndex color if Admin is also a Leader
-			if (pPlayer && pPlayer->IsLeader())
-				color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
-			else
-				color = pTarget->m_iTeamNum == CS_TEAM_T ? LeaderColorMap[2].clColor/*orange*/ : LeaderColorMap[1].clColor/*blue*/;
-
-			ZEPlayer *pPlayerTarget = pTarget->GetZEPlayer();
-
-			if (!pPlayerTarget->GetGlowModel())
-				pPlayerTarget->StartGlow(color, iDuration);
-			else
-				pPlayerTarget->EndGlow();
-
-			if (iNumClients == 1)
-				PrintSingleAdminAction(pszCommandPlayerName, pTarget->GetPlayerName(), "toggled glow on", "", CHAT_PREFIX);
-		}
-
-		if (iNumClients > 1)
-			PrintMultiAdminAction(nType, pszCommandPlayerName, "toggled glow on", "", CHAT_PREFIX);
-
-		return;
-	}
-
-	// Leader command logic
-
-	if (!g_bEnableLeader)
-		return;
-
-	if (!pPlayer->IsLeader())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a Leader or an Admin to use this command.");
-		return;
-	}
-
-	if (player->m_iTeamNum != CS_TEAM_CT && g_bLeaderActionsHumanOnly)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a human to use this command.");
-		return;
-	}
-
-	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_DEAD | NO_MULTIPLE | NO_TERRORIST))
+	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE | NO_BOT | NO_IMMUNITY))
 		return;
 
 	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
+	ZEPlayer* pPlayerTarget = pTarget->GetZEPlayer();
 
-	color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
+	new CZRLeader(pPlayerTarget, ELeaderType::HEAD);
 
-	ZEPlayer *pPlayerTarget = pTarget->GetZEPlayer();
-
-	if (!pPlayerTarget->GetGlowModel())
-	{
-		pPlayerTarget->StartGlow(color, iDuration);
-		ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "Leader %s enabled glow on %s.", player->GetPlayerName(), pTarget->GetPlayerName());
-	}
-	else
-	{
-		pPlayerTarget->EndGlow();
-		ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "Leader %s disabled glow on %s.", player->GetPlayerName(), pTarget->GetPlayerName());
-	}
+	ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "You have assigned \3" "%s \1as the \5Head Leader\1.", pTarget->GetPlayerName());
 }
 
-CON_COMMAND_CHAT(vl, "<name> - Vote for a player to become a leader")
+CON_COMMAND_CHAT_FLAGS(removeleader, "<name> - Force a player to remove from the leader access", ADMFLAG_BAN)
 {
-	if (!g_bEnableLeader)
-		return;
-
-	if (!player)
+	if (args.ArgC() < 2)
 	{
-		ClientPrint(player, HUD_PRINTCONSOLE, CHAT_PREFIX "You cannot use this command from the server console.");
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !removeleader <name>");
 		return;
 	}
+
+	int iNumClients = 0;
+	int pSlots[MAXPLAYERS];
+
+	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE | NO_BOT | NO_IMMUNITY))
+		return;
+
+	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
+	ZEPlayer* pPlayerTarget = pTarget->GetZEPlayer();
+
+	FOR_EACH_VEC(g_vecLeaders, i)
+	{
+		if (g_vecLeaders[i].GetPlayer() == pPlayerTarget)
+		{
+			g_vecLeaders.Remove(i);
+
+			ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "You have removed \3" "%s \1from the leader access.", pTarget->GetPlayerName());
+			return;
+		}
+	}
+
+	ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "Target does not have any leader access!");
+}
+
+CON_COMMAND_CHAT(vl, "<name> - Vote for a player to become a new leader")
+{
+	if (!player)
+		return;
 
 	if (args.ArgC() < 2)
 	{
@@ -392,520 +520,119 @@ CON_COMMAND_CHAT(vl, "<name> - Vote for a player to become a leader")
 		return;
 	}
 
-	ZEPlayer* pPlayer = player->GetZEPlayer();
-
-	if (pPlayer->GetLeaderVoteTime() + 30.0f > gpGlobals->curtime)
+	FOR_EACH_VEC(g_vecLeaders, i)
 	{
-		int iRemainingTime = (int)(pPlayer->GetLeaderVoteTime() + 30.0f - gpGlobals->curtime);
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Wait %i seconds before you can !vl again.", iRemainingTime);
-		return;
+		if (g_vecLeaders[i].GetPlayer()->GetLeaderType() == ELeaderType::HEAD)
+		{
+			ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "Head Leader has been already existed!");
+			return;
+		}
 	}
 
 	int iNumClients = 0;
 	int pSlots[MAXPLAYERS];
 
-	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE | NO_SELF | NO_BOT | NO_IMMUNITY))
+	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE | NO_BOT | NO_IMMUNITY))
 		return;
 
 	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
 	ZEPlayer* pPlayerTarget = pTarget->GetZEPlayer();
 
-	if (pPlayerTarget->IsLeader())
+	ZEPlayer* pPlayer = player->GetZEPlayer();
+	ZEPlayer* pLastVoted = pPlayer->GetLastVotedPlayer();
+
+	if (pLastVoted == pPlayerTarget)
 	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is already a Leader.", pTarget->GetPlayerName());
+		ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "You have already voted for this player!");
 		return;
 	}
 
-	if (pPlayerTarget->HasPlayerVotedLeader(pPlayer))
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You have already voted for %s to become a leader.", pTarget->GetPlayerName());
-		return;
-	}
-
-	int iLeaderVoteCount = pPlayerTarget->GetLeaderVoteCount();
-	int iNeededLeaderVoteCount = Leader_GetNeededLeaderVoteCount();
-
-	pPlayer->SetLeaderVoteTime(gpGlobals->curtime);
-
-	if (iLeaderVoteCount + 1 >= iNeededLeaderVoteCount)
-	{
-		pPlayerTarget->SetLeader(++g_iLeaderIndex);
-		pPlayerTarget->PurgeLeaderVotes();
-		pPlayerTarget->SetLeaderTracer(g_iLeaderIndex);
-		g_vecLeaders.AddToTail(pPlayerTarget->GetHandle());
-
-		if (pTarget->m_iTeamNum == CS_TEAM_CT)
-		{
-			CCSPlayerPawn *pPawn = (CCSPlayerPawn *)pTarget->GetPawn();
-			Leader_ApplyLeaderVisuals(pPawn);
-		}
-
-		Message("%s was voted for Leader with %i vote(s). LeaderIndex = %i\n", pTarget->GetPlayerName(), iNeededLeaderVoteCount, g_iLeaderIndex);
-
-		ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "%s is now a Leader!", pTarget->GetPlayerName());
-		
-		ClientPrint(pTarget, HUD_PRINTTALK, CHAT_PREFIX "You became a leader! Use !leaderhelp and !leadercolors commands to list available leader commands and colors");
-
-		// apply apparent leader perks (like leader model, glow(?)) here
-		// also run a timer somewhere (per player or global) to reapply them
-
-		return;
-	}
+	if (pLastVoted)
+		pLastVoted->RemoveLeaderVote(pPlayer);
 
 	pPlayerTarget->AddLeaderVote(pPlayer);
-	ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "%s wants %s to become a Leader (%i/%i votes).",\
-				player->GetPlayerName(), pTarget->GetPlayerName(), iLeaderVoteCount+1, iNeededLeaderVoteCount);
+
+	int iCurrentVotes = pPlayerTarget->GetLeaderVoteCount();
+	int iRequiredVotes = Leader_GetRequiredVoteCounts();
+
+	ClientPrintAll(HUD_PRINTTALK, LEADER_PREFIX " \3" "%s \1has voted for \3" "%s \1to become the new leader (%d/%d votes).", player->GetPlayerName(), pTarget->GetPlayerName(), iCurrentVotes, iRequiredVotes);
+
+	if (iCurrentVotes >= iRequiredVotes)
+	{
+		new CZRLeader(pPlayerTarget, ELeaderType::HEAD);
+		ClientPrintAll(HUD_PRINTTALK, LEADER_PREFIX " \3" "%s \1has been voted to \5HEAD Leader\1!", pTarget->GetPlayerName());
+
+		pPlayerTarget->PurgeLeaderVotes();
+	}
 }
 
-CON_COMMAND_CHAT(defend, "[name|duration] [duration] - Place a defend marker on you or target player")
+CON_COMMAND_CHAT(tl, "<name> - (only HEAD Leader available)")
 {
-	if (!g_bEnableLeader)
-		return;
-
 	if (!player)
-	{
-		ClientPrint(player, HUD_PRINTCONSOLE, CHAT_PREFIX "You cannot use this command from the server console.");
 		return;
-	}
 
 	ZEPlayer* pPlayer = player->GetZEPlayer();
 
-	if (!pPlayer->IsLeader())
+	if (!pPlayer || pPlayer->GetLeaderType() != ELeaderType::HEAD)
 	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a leader to use this command.");
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You don't have access to this command.");
 		return;
 	}
 
-	if (player->m_iTeamNum != CS_TEAM_CT && g_bLeaderActionsHumanOnly)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a human to use this command.");
-		return;
-	}
-
-	// no arguments, place default duration marker on player
 	if (args.ArgC() < 2)
 	{
-		if (player->m_iTeamNum != CS_TEAM_CT)
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !tl <name>");
+		return;
+	}
+
+	FOR_EACH_VEC(g_vecLeaders, i)
+	{
+		if (g_vecLeaders[i].GetPlayer()->GetLeaderType() == ELeaderType::TEMPORARY)
 		{
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You can only place defend marker on a human.");
+			ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "TEMPORARY Leader has been already existed!");
 			return;
 		}
-
-		if (Leader_CreateDefendMarker(pPlayer, LeaderColorMap[pPlayer->GetLeaderIndex()].clColor, 30))
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Placed defend marker on yourself lasting 30 seconds.");
-
-		return;
 	}
 
 	int iNumClients = 0;
 	int pSlots[MAXPLAYERS];
-	ETargetType nType;
 
-	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE | NO_TERRORIST | NO_DEAD | NO_IMMUNITY, nType))
+	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_SELF | NO_MULTIPLE | NO_BOT | NO_IMMUNITY))
 		return;
 
-	// 1 argument, check if it's target or duration
-	if (args.ArgC() == 2)
+	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
+	CCSPlayerPawn* pPawnTarget = (CCSPlayerPawn*)pTarget->GetPawn();
+	ZEPlayer* pPlayerTarget = pTarget->GetZEPlayer();
+
+	if (pPlayerTarget->IsInfected() || !pPawnTarget->IsAlive())
 	{
-		if (iNumClients) // valid target
-		{
-			CCSPlayerController *pTarget = CCSPlayerController::FromSlot(pSlots[0]);
-			ZEPlayer* pTargetPlayer = pTarget->GetZEPlayer();
-
-			if (Leader_CreateDefendMarker(pTargetPlayer, LeaderColorMap[pPlayer->GetLeaderIndex()].clColor, 30))
-				ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Placed defend marker on %s lasting 30 seconds.", pTarget->GetPlayerName());
-
-			return;
-		}
-
-		// Targetting self
-		int iArg1 = V_StringToInt32(args[1], -1);
-		if (iArg1 == -1) // target not found AND assume it's not a valid number
-		{
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s", g_playerManager->GetErrorString(ETargetError::INVALID, (iNumClients == 0) ? 0 : pSlots[0]).c_str());
-			return;
-		}
-
-		if (!g_playerManager->CanTargetPlayers(player, "@me", iNumClients, pSlots, NO_TERRORIST | NO_DEAD | NO_IMMUNITY, nType))
-			return;
-
-		if (iArg1 < 1)
-		{
-			if (Leader_CreateDefendMarker(pPlayer, LeaderColorMap[pPlayer->GetLeaderIndex()].clColor, 30))
-				ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Placed defend marker on yourself lasting 30 seconds.");
-
-			return;
-		}
-		iArg1 = MIN(iArg1, 60);
-
-		if (Leader_CreateDefendMarker(pPlayer, LeaderColorMap[pPlayer->GetLeaderIndex()].clColor, iArg1))
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Placed defend marker on yourself lasting %i seconds.", iArg1);
-
+		ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "Target must be alive in Human!");
 		return;
 	}
 
-	CCSPlayerController *pTarget = CCSPlayerController::FromSlot(pSlots[0]);
-	ZEPlayer* pTargetPlayer = pTarget->GetZEPlayer();
+	new CZRLeader(pPlayerTarget, ELeaderType::TEMPORARY);
 
-	int iArg2 = V_StringToInt32(args[2], -1);
-
-	if (iArg2 < 1) // assume it's not a valid number
-	{
-		if (Leader_CreateDefendMarker(pTargetPlayer, LeaderColorMap[pPlayer->GetLeaderIndex()].clColor, 30))
-			ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Placed defend marker on %s lasting 30 seconds.", pTarget->GetPlayerName());
-
-		return;
-	}
-
-	iArg2 = MIN(iArg2, 60);
-
-	if (Leader_CreateDefendMarker(pTargetPlayer, LeaderColorMap[pPlayer->GetLeaderIndex()].clColor, iArg2))
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Placed defend marker on %s lasting %i seconds.", pTarget->GetPlayerName(), iArg2);
+	ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "You have assigned \3" "%s \1as the \5TEMPORARY Leader\1.", pTarget->GetPlayerName());
 }
 
-CON_COMMAND_CHAT(tracer, "<name> [color] - Toggle projectile tracers on a player")
+CON_COMMAND_CHAT(r, "- Resign from the leader access")
 {
-	if (!g_bEnableLeader)
-		return;
-
 	if (!player)
-	{
-		ClientPrint(player, HUD_PRINTCONSOLE, CHAT_PREFIX "You cannot use this command from the server console.");
-		return;
-	}
-
-	int iPlayerSlot = player->GetPlayerSlot();
-
-	ZEPlayer* pPlayer = g_playerManager->GetPlayer(iPlayerSlot);
-
-	if (!pPlayer->IsLeader())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a leader to use this command.");
-		return;
-	}
-
-	if (player->m_iTeamNum != CS_TEAM_CT && g_bLeaderActionsHumanOnly)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a human to use this command.");
-		return;
-	}
-
-	if (args.ArgC() < 2)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !tracer <name> [color]");
-		return;
-	}
-
-	int iNumClients = 0;
-	int pSlots[MAXPLAYERS];
-
-	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE | NO_TERRORIST))
 		return;
 
-	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
-	ZEPlayer* pPlayerTarget = pTarget->GetZEPlayer();
+	ZEPlayer* pPlayer = player->GetZEPlayer();
 
-	if (pPlayerTarget->GetLeaderTracer())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Disabled tracers for player %s.", pTarget->GetPlayerName());
-		pPlayerTarget->SetLeaderTracer(0);
+	if (pPlayer->GetLeaderType() == ELeaderType::NONE)
 		return;
-	}
-
-	int iTracerIndex = 0;
-	if (args.ArgC() < 3)
-		iTracerIndex = pPlayer->GetLeaderIndex();
-	else
-	{
-		int iIndex = V_StringToInt32(args[2], -1);
-
-		if (iIndex > -1)
-			iTracerIndex = MIN(iIndex, g_nLeaderColorMapSize-1);
-		else
-		{
-			for (int i = 0; i < g_nLeaderColorMapSize; i++)
-			{
-				if (!V_stricmp(args[2], LeaderColorMap[i].pszColorName))
-				{
-					iTracerIndex = i;
-					break;
-				}
-			}
-		}
-	}
-
-	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Enabled tracers for player %s.", pTarget->GetPlayerName());
-	pPlayerTarget->SetLeaderTracer(iTracerIndex);
-}
-
-CON_COMMAND_CHAT(beacon, "<name> [color] - Toggle beacon on a player")
-{
-	ZEPlayer* pPlayer = player ? player->GetZEPlayer() : nullptr;
-	bool bIsAdmin = pPlayer ? pPlayer->IsAdminFlagSet(ADMFLAG_GENERIC) : true;
-
-	if (args.ArgC() < 2 && (bIsAdmin || (g_bEnableLeader && pPlayer->IsLeader())))
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !beacon <name> [color]");
-		return;
-	}
-
-	int iNumClients = 0;
-	int pSlots[MAXPLAYERS];
-	ETargetType nType;
-
-	if (bIsAdmin) // Admin beacon logic
-	{
-		if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_DEAD, nType))
-			return;
-
-		const char* pszCommandPlayerName = player ? player->GetPlayerName() : CONSOLE_NAME;
-
-		Color color;
-		if (args.ArgC() == 3)
-			color = Leader_ColorFromString(args[2]);
-
-		for (int i = 0; i < iNumClients; i++)
-		{
-			CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[i]);
-
-			if (!pTarget)
-				continue;
-
-			if (pTarget->m_iTeamNum < CS_TEAM_T)
-				continue;
-
-			// Exception - Use LeaderIndex color if Admin is also a Leader
-			if (args.ArgC() == 2 && pPlayer && pPlayer->IsLeader())
-				color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
-			else if (args.ArgC() == 2)
-				color = pTarget->m_iTeamNum == CS_TEAM_T ? LeaderColorMap[2].clColor/*orange*/ : LeaderColorMap[1].clColor/*blue*/;
-
-			ZEPlayer *pPlayerTarget = pTarget->GetZEPlayer();
-
-			if (!pPlayerTarget->GetBeaconParticle())
-				pPlayerTarget->StartBeacon(color, pPlayer->GetHandle());
-			else
-				pPlayerTarget->EndBeacon();
-
-			if (iNumClients == 1)
-				PrintSingleAdminAction(pszCommandPlayerName, pTarget->GetPlayerName(), "toggled beacon on", "", CHAT_PREFIX);
-		}
-
-		if (iNumClients > 1)
-			PrintMultiAdminAction(nType, pszCommandPlayerName, "toggled beacon on", "", CHAT_PREFIX);
-
-		return;
-	}
-
-	// Leader beacon logic
-
-	if (!g_bEnableLeader)
-		return;
-
-	if (!pPlayer->IsLeader())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a Leader or an Admin to use this command.");
-		return;
-	}
-
-	if (player->m_iTeamNum != CS_TEAM_CT && g_bLeaderActionsHumanOnly)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "You must be a human to use this command.");
-		return;
-	}
-
-	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_DEAD | NO_MULTIPLE | NO_TERRORIST))
-		return;
-
-	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
-
-	Color color;
-	if (args.ArgC() == 3)
-		color = Leader_ColorFromString(args[2]);
-	else
-		color = LeaderColorMap[pPlayer->GetLeaderIndex()].clColor;
-
-	ZEPlayer *pPlayerTarget = pTarget->GetZEPlayer();
-
-	if (!pPlayerTarget->GetBeaconParticle())
-	{
-		pPlayerTarget->StartBeacon(color, pPlayer->GetHandle());
-		ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "Leader %s enabled beacon on %s.", player->GetPlayerName(), pTarget->GetPlayerName());
-	}
-	else
-	{
-		pPlayerTarget->EndBeacon();
-		ClientPrintAll(HUD_PRINTTALK, CHAT_PREFIX "Leader %s disabled beacon on %s.", player->GetPlayerName(), pTarget->GetPlayerName());
-	}
-}
-
-CON_COMMAND_CHAT(leaders, "- List all current leaders")
-{
-	if (!g_bEnableLeader)
-		return;
-
-	int iDestination = player ? HUD_PRINTTALK : HUD_PRINTCONSOLE;
-
-	if (Leader_NoLeaders()) // also wipes any invalid entries from g_vecLeaders
-	{
-		ClientPrint(player, iDestination, CHAT_PREFIX "There are currently no leaders.");
-		return;
-	}
-
-	ClientPrint(player, iDestination, CHAT_PREFIX "List of current leaders:");
 
 	FOR_EACH_VEC(g_vecLeaders, i)
 	{
-		ZEPlayer *pLeader = g_vecLeaders[i].Get();
-		CCSPlayerController *pController = CCSPlayerController::FromSlot((CPlayerSlot) pLeader->GetPlayerSlot());
-
-		ClientPrint(player, iDestination, CHAT_PREFIX "%s", pController->GetPlayerName());
-	}
-}
-
-CON_COMMAND_CHAT(leaderhelp, "- List leader commands in chat")
-{
-	if (!g_bEnableLeader)
-		return;
-
-	int iDestination = player ? HUD_PRINTTALK : HUD_PRINTCONSOLE;
-
-	ClientPrint(player, iDestination, CHAT_PREFIX "List of leader commands:");
-	ClientPrint(player, iDestination, CHAT_PREFIX "!beacon <name> [color] - place a beacon on player");
-	ClientPrint(player, iDestination, CHAT_PREFIX "!tracer <name> [color] - give player tracers");
-	ClientPrint(player, iDestination, CHAT_PREFIX "!defend [name|duration] [duration] - place defend mark on player");
-	ClientPrint(player, iDestination, CHAT_PREFIX "!glow <name> [duration] - toggle glow highlight on a player");
-}
-
-CON_COMMAND_CHAT(leadercolors, "- List leader colors in chat")
-{
-	if (!g_bEnableLeader)
-		return;
-
-	int iDestination = player ? HUD_PRINTTALK : HUD_PRINTCONSOLE;
-
-	ClientPrint(player, iDestination, CHAT_PREFIX "List of leader colors:");
-	for (int i = 0; i < g_nLeaderColorMapSize; i++)
-	{
-		ClientPrint(player, iDestination, CHAT_PREFIX "%i - %s", i, LeaderColorMap[i].pszColorName);
-	}
-}
-
-CON_COMMAND_CHAT_FLAGS(forceld, "<name> [color] - Force leader status on a player", ADMFLAG_GENERIC)
-{
-	if (!g_bEnableLeader)
-		return;
-
-	if (args.ArgC() < 2)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !forceld <name> [index]");
-		return;
-	}
-
-	int iNumClients = 0;
-	int pSlots[MAXPLAYERS];
-
-	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE))
-		return;
-
-	const char* pszCommandPlayerName = player ? player->GetPlayerName() : CONSOLE_NAME;
-
-	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
-	ZEPlayer* pPlayerTarget = pTarget->GetZEPlayer();
-
-	if (pPlayerTarget->IsLeader())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is already a leader.", pTarget->GetPlayerName());
-		return;
-	}
-
-	if (args.ArgC() < 3)
-	{
-		pPlayerTarget->SetLeader(++g_iLeaderIndex);
-		pPlayerTarget->SetLeaderTracer(g_iLeaderIndex);
-	}
-	else
-	{
-		int iColorIndex = V_StringToInt32(args[2], -1);
-
-		if (iColorIndex > -1)
-		{
-			iColorIndex = MIN(iColorIndex, g_nLeaderColorMapSize-1);
-		}
-		else
-		{
-			for (int i = 0; i < g_nLeaderColorMapSize; i++)
-			{
-				if (!V_stricmp(args[2], LeaderColorMap[i].pszColorName))
-				{
-					iColorIndex = i;
-					break;
-				}
-			}
-		}
-
-		if (iColorIndex > -1)
-		{
-			pPlayerTarget->SetLeader(iColorIndex);
-			pPlayerTarget->SetLeaderTracer(iColorIndex);
-		}
-		else
-		{
-			pPlayerTarget->SetLeader(++g_iLeaderIndex);
-			pPlayerTarget->SetLeaderTracer(g_iLeaderIndex);
-		}
-	}
-
-	if (pTarget->m_iTeamNum == CS_TEAM_CT)
-		Leader_ApplyLeaderVisuals((CCSPlayerPawn *)pTarget->GetPawn());
-
-	pPlayerTarget->PurgeLeaderVotes();
-	g_vecLeaders.AddToTail(pPlayerTarget->GetHandle());
-
-	PrintSingleAdminAction(pszCommandPlayerName, pTarget->GetPlayerName(), "forced", " to be a Leader", CHAT_PREFIX);
-}
-
-CON_COMMAND_CHAT_FLAGS(stripld, "<name> - Strip leader status from a player", ADMFLAG_GENERIC)
-{
-	if (!g_bEnableLeader)
-		return;
-
-	if (args.ArgC() < 2)
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Usage: !stripld <name>");
-		return;
-	}
-
-	int iNumClients = 0;
-	int pSlots[MAXPLAYERS];
-
-	if (!g_playerManager->CanTargetPlayers(player, args[1], iNumClients, pSlots, NO_MULTIPLE))
-		return;
-
-	const char* pszCommandPlayerName = player ? player->GetPlayerName() : CONSOLE_NAME;
-
-	CCSPlayerController* pTarget = CCSPlayerController::FromSlot(pSlots[0]);
-	ZEPlayer* pPlayerTarget = pTarget->GetZEPlayer();
-
-	if (!pPlayerTarget->IsLeader())
-	{
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "%s is not a leader.", pTarget->GetPlayerName());
-		return;
-	}
-
-	pPlayerTarget->SetLeader(0);
-	pPlayerTarget->SetLeaderTracer(0);
-	FOR_EACH_VEC(g_vecLeaders, i)
-	{
-		if (g_vecLeaders[i] == pPlayerTarget)
+		if (g_vecLeaders[i].GetPlayer() == pPlayer)
 		{
 			g_vecLeaders.Remove(i);
-			break;
+
+			ClientPrint(player, HUD_PRINTTALK, LEADER_PREFIX "You resigned from the leader access!");
+			return;
 		}
 	}
-
-	if (pTarget->m_iTeamNum == CS_TEAM_CT)
-		Leader_RemoveLeaderVisuals((CCSPlayerPawn *)pTarget->GetPawn());
-
-	PrintSingleAdminAction(pszCommandPlayerName, pTarget->GetPlayerName(), "stripped leader from ", "", CHAT_PREFIX);
 }

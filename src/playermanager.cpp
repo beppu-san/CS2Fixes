@@ -345,51 +345,63 @@ void ZEPlayer::EndBeacon()
 		addresses::UTIL_Remove(pParticle);
 }
 
-void ZEPlayer::SetLeader(int leaderIndex)
-{
-	if (leaderIndex >= g_nLeaderColorMapSize)
-	{
-		m_iLeaderIndex = g_iLeaderIndex = 1;
-		return;
-	}
-
-	m_iLeaderIndex = leaderIndex;
-}
-
-int ZEPlayer::GetLeaderVoteCount()
-{
-	int iValidVoteCount = 0;
-
-	for (int i = m_vecLeaderVotes.Count() - 1; i >= 0; i--)
-	{
-		if (m_vecLeaderVotes[i].IsValid())
-			iValidVoteCount++;
-		else
-			m_vecLeaderVotes.Remove(i);
-	}
-
-	return iValidVoteCount;
-}
-
-bool ZEPlayer::HasPlayerVotedLeader(ZEPlayer *pPlayer)
+void ZEPlayer::RemoveLeaderVote(ZEPlayer* pPlayer)
 {
 	FOR_EACH_VEC(m_vecLeaderVotes, i)
 	{
 		if (m_vecLeaderVotes[i] == pPlayer)
-			return true;
+			m_vecLeaderVotes.Remove(i);
 	}
+}
 
+bool ZEPlayer::IsLeader()
+{
+	if (m_nLeaderType == ELeaderType::HEAD)
+	{
+		FOR_EACH_VEC(g_vecLeaders, i)
+		{
+			if (g_vecLeaders[i].GetPlayer()->GetLeaderType() == ELeaderType::TEMPORARY)
+				return false;
+		}
+		return true;
+	}
+	else if (m_nLeaderType != ELeaderType::NONE)
+		return true;
 	return false;
 }
 
-void ZEPlayer::AddLeaderVote(ZEPlayer* pPlayer)
+int ZEPlayer::GetLeaderVoteCount()
 {
-	m_vecLeaderVotes.AddToTail(pPlayer->GetHandle());
+	int iCount = 0;
+
+	FOR_EACH_VEC(m_vecLeaderVotes, i)
+	{
+		if (m_vecLeaderVotes[i].IsValid())
+			iCount++;
+		else
+			m_vecLeaderVotes.Remove(i);
+	}
+
+	return iCount;
 }
 
-void ZEPlayer::PurgeLeaderVotes()
+ZEPlayer* ZEPlayer::GetLastVotedPlayer()
 {
-	m_vecLeaderVotes.Purge();
+	for (int i = 0; i < gpGlobals->maxClients; i++)
+	{
+		ZEPlayer* pPlayer = g_playerManager->GetPlayer(i);
+
+		if (pPlayer)
+		{
+			FOR_EACH_VEC(pPlayer->m_vecLeaderVotes, i)
+			{
+				if (pPlayer->m_vecLeaderVotes[i] == this)
+					return pPlayer;
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 void ZEPlayer::StartGlow(Color color, int duration)

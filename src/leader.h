@@ -18,27 +18,70 @@
  */
 
 #pragma once
-#include "utils/entity.h"
-#include "playermanager.h"
+
 #include "gamesystem.h"
 #include "igameevents.h"
+#include "playermanager.h"
+#include "utils/entity.h"
 
-struct LeaderColor
+#include "entity/cbasemodelentity.h"
+#include "entity/cpointworldtext.h"
+
+#define LEADER_PREFIX " \4[ZLeader]\1 "
+
+enum class ELeaderType
 {
-	const char* pszColorName;
-	Color clColor;
+	NONE,
+	HEAD,
+	TEMPORARY,
+	ASSISTANT,
 };
 
-extern LeaderColor LeaderColorMap[];
-extern const size_t g_nLeaderColorMapSize;
-extern CUtlVector<ZEPlayerHandle> g_vecLeaders;
-extern int g_iLeaderIndex;
+class CLeaderMarker
+{
+public:
+	CLeaderMarker(const Vector& origin, const QAngle& angles, int iIndex, CBaseEntity* pParent = nullptr);
+
+	bool operator==(const CLeaderMarker& a) const { return m_iIndex == a.m_iIndex; }
+
+	int GetIndex() { return m_iIndex; }
+	void Remove();
+
+private:
+	CHandle<CBaseModelEntity> m_hModel;
+	CHandle<CPointWorldText> m_hSprite;
+	int m_iIndex;
+};
+
+class CZRLeader
+{
+public:
+	CZRLeader(ZEPlayer* pPlayer, ELeaderType nType);
+	~CZRLeader();
+
+	void PutMarker();
+	void RemoveAllMarkers();
+
+	CBaseEntity* GetEntityAimed(Vector& origin, QAngle& angles, bool bIsRecursive = false);
+	void TraceShape(const Vector& start, const Vector& end, CTraceFilter* pFilter, trace_t& pm) { addresses::TracePlayerBBox(start, end, { { 0.f, 0.f, 0.f }, { 0.f, 0.f, 0.f } }, pFilter, pm); }
+
+	ZEPlayer* GetPlayer() { return m_hPlayer.Get(); }
+
+private:
+	ZEPlayerHandle m_hPlayer;
+	uint64 m_iButtonsPrevious;
+	uint64 m_iButtons;
+	bool m_bIgnoreAttack2Input;
+	int m_iPaintModeQueue;
+	int m_iMarkerIndex;
+};
+
+extern CUtlVector<CLeaderMarker> g_vecMarkers;
+extern CUtlVector<CZRLeader> g_vecLeaders;
 
 extern bool g_bEnableLeader;
 
-bool Leader_NoLeaders();
-void Leader_ApplyLeaderVisuals(CCSPlayerPawn *pPawn);
-void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64 *clients, const CNetMessage *pData);
-void Leader_OnRoundStart(IGameEvent *pEvent);
-void Leader_BulletImpact(IGameEvent *pEvent);
-void Leader_Precache(IEntityResourceManifest *pResourceManifest);
+int Leader_GetRequiredVoteCounts();
+void Leader_Precache(IEntityResourceManifest* pResourceManifest);
+void Leader_PostEventAbstract_Source1LegacyGameEvent(const uint64* clients, const CNetMessage* pData);
+void Leader_OnRoundStart(IGameEvent* pEvent);

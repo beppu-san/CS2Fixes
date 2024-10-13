@@ -592,6 +592,7 @@ void CZRPlayerClassManager::ApplyHumanClass(std::shared_ptr<ZRHumanClass> pClass
 	if (pController)
 		CZRRegenTimer::StopRegen(pController);
 	
+	/*
 	if (!g_bEnableLeader || !pController)
 		return;
 	
@@ -609,6 +610,7 @@ void CZRPlayerClassManager::ApplyHumanClass(std::shared_ptr<ZRHumanClass> pClass
 			return -1.0f;
 		});
 	}
+	*/
 }
 
 void CZRPlayerClassManager::ApplyPreferredOrDefaultHumanClass(CCSPlayerPawn *pPawn)
