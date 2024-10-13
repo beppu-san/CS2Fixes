@@ -170,7 +170,6 @@ public:
 		m_flNominateTime = -60.0f;
 		m_iPlayerState = 1; // STATE_WELCOME is the initial state
 		m_nLeaderType = (ELeaderType)0;
-		
 		m_flSpeedMod = 1.f;
 		m_flMaxSpeed = 1.f;
 		m_iLastInputs = IN_NONE;
