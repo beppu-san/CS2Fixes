@@ -578,6 +578,15 @@ void CPlayerManager::OnClientDisconnect(CPlayerSlot slot)
 	g_pUserPreferencesSystem->PushPreferences(slot.Get());
 	g_pUserPreferencesSystem->ClearPreferences(slot.Get());
 
+	if (m_vecPlayers[slot.Get()]->GetLeaderType() != ELeaderType::NONE)
+	{
+		FOR_EACH_VEC(g_vecLeaders, i)
+		{
+			if (g_vecLeaders[i].GetPlayer() == m_vecPlayers[slot.Get()])
+				g_vecLeaders.Remove(i);
+		}
+	}
+
 	delete m_vecPlayers[slot.Get()];
 	m_vecPlayers[slot.Get()] = nullptr;
 
